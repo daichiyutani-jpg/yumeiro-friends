@@ -154,7 +154,7 @@ export function AdventureScreen() {
   const team = save.team.map((u) => getFriend(save, u)).filter((f) => !!f);
 
   return (
-    <div className="screen">
+    <div className="screen play-screen">
       <Stage camera={[0, 9, FOREST.spawn.z + 10.5]} fov={50}>
         <ForestScene
           save={save}
@@ -178,15 +178,15 @@ export function AdventureScreen() {
         <div className="team-strip">
           {team.map((f) => (
             <button key={f.uid} className="tm" onClick={() => setDialog({ kind: 'team' })} aria-label={`チーム ${displayName(f)}`}>
-              <CreatureIcon look={getSpecies(f.speciesId).look} size={40} />
+              <CreatureIcon look={getSpecies(f.speciesId).look} size={30} />
             </button>
           ))}
         </div>
       </div>
       {save.tutorial.done ? null : <TutorialGuide />}
       <Joystick />
-      <button className="action-btn" disabled={!near || !!dialog} onClick={doAction}>
-        {near ? near.label : 'ちかくに なにも ないよ'}
+      <button className="action-btn" disabled={!near || !!dialog} onClick={doAction} aria-label={near ? near.label : 'ちかくに なにも ないよ'}>
+        {near ? near.label : '🔍'}
       </button>
       {floats.map((f) => (
         <div key={f.id} className="float-text">

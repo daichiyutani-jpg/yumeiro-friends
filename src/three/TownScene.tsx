@@ -176,8 +176,8 @@ export function TownScene(props: TownSceneProps) {
       camera.position.set(0, 17, 12);
       camera.lookAt(0, 0, 2.6);
     } else if (mode === 'home') {
-      camera.position.set(0, 21, 21);
-      camera.lookAt(0, 0, -2.2);
+      camera.position.set(0, 17.5, 17);
+      camera.lookAt(0, 0, -0.9);
     } else {
       camera.position.set(0, 15, 14);
       camera.lookAt(0, 0, 0.5);

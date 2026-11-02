@@ -23,7 +23,9 @@
 }
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
-body { background: linear-gradient(180deg, #ffe9f4 0%, #efe9ff 60%, #e3f5ff 100%); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+/* body を固定して、iOS で アドレスバーの のびちぢみ や はねかえりで 画面ごと うごかないようにする */
+body { position: fixed; inset: 0; width: 100%; background: linear-gradient(180deg, #ffe9f4 0%, #efe9ff 60%, #e3f5ff 100%); touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.play-screen { touch-action: none; }
 body.big-text { font-size: 18px; }
 button { font: inherit; color: inherit; }
 input { font: inherit; }
@@ -31,7 +33,7 @@ input { font: inherit; }
 .app { position: fixed; inset: 0; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; }
 .canvas-wrap { position: absolute; inset: 0; }
 .canvas-wrap canvas { touch-action: none; }
-.home-canvas { bottom: calc(280px + var(--safe-b)); }
+.home-canvas { bottom: calc(160px + var(--safe-b)); }
 .edit-canvas { bottom: 150px; }
 
 /* ---------- ボタン ---------- */
@@ -88,27 +90,31 @@ input { font: inherit; }
 /* ---------- ホーム ---------- */
 .hud-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(8px + var(--safe-t)) 10px 0; display: flex; gap: 8px; align-items: flex-start; pointer-events: none; z-index: 4; }
 .hud-top > * { pointer-events: auto; }
-.pill { background: rgba(255, 255, 255, .88); border-radius: 22px; padding: 8px 14px; font-weight: 800; box-shadow: var(--shadow); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
-.guide { position: absolute; left: 10px; right: 10px; top: calc(64px + var(--safe-t)); z-index: 4; background: rgba(255, 255, 255, .95); border: 3px solid var(--pink); border-radius: 18px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; box-shadow: var(--shadow); font-weight: 700; font-size: .95rem; line-height: 1.5; }
-.guide .skip { flex: none; }
-.menu { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 10px calc(10px + var(--safe-b)); background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255, 240, 248, .95) 22%); z-index: 4; }
-.menu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
-.menu-btn { min-height: 66px; border: 0; border-radius: 18px; background: #fff; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-weight: 700; font-size: .78rem; cursor: pointer; padding: 6px 2px; position: relative; }
-.menu-btn .ic { font-size: 1.6rem; line-height: 1; }
+.pill { background: rgba(255, 255, 255, .88); border-radius: 18px; padding: 5px 11px; font-weight: 800; font-size: .88rem; box-shadow: var(--shadow); display: inline-flex; align-items: center; gap: 5px; min-height: 34px; }
+.guide { position: absolute; left: 8px; right: 8px; top: calc(48px + var(--safe-t)); z-index: 4; background: rgba(255, 255, 255, .92); border: 2px solid var(--pink); border-radius: 14px; padding: 5px 6px 5px 8px; display: flex; gap: 6px; align-items: center; box-shadow: var(--shadow); font-weight: 700; font-size: .78rem; line-height: 1.4; }
+.guide .fairy { font-size: 1.1rem; }
+.guide .skip { flex: none; min-height: 30px; padding: 2px 10px; font-size: .72rem; }
+.menu { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(8px + var(--safe-b)); background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255, 240, 248, .95) 18%); z-index: 4; }
+.menu-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; margin-top: 6px; }
+.menu-btn { min-height: 48px; border: 0; border-radius: 14px; background: #fff; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-weight: 700; font-size: .56rem; letter-spacing: -.04em; white-space: nowrap; cursor: pointer; padding: 4px 1px; position: relative; }
+.menu-btn .ic { font-size: 1.25rem; line-height: 1; }
 .menu-btn:active { transform: translateY(2px); }
-.badge { position: absolute; top: 4px; right: 6px; background: var(--pink); color: #fff; border-radius: 10px; min-width: 20px; height: 20px; font-size: .72rem; display: grid; place-items: center; padding: 0 5px; }
-.adventure-btn { width: 100%; min-height: 62px; font-size: 1.2rem; }
+.badge { position: absolute; top: 2px; right: 3px; background: var(--pink); color: #fff; border-radius: 9px; min-width: 17px; height: 17px; font-size: .62rem; display: grid; place-items: center; padding: 0 4px; }
+.adventure-btn { width: 100%; min-height: 44px; font-size: 1rem; }
 
 /* ---------- 冒険 ---------- */
-.joystick { position: absolute; left: 18px; bottom: calc(26px + var(--safe-b)); width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, .45); border: 3px solid rgba(255, 255, 255, .9); box-shadow: inset 0 0 18px rgba(185, 168, 255, .45); touch-action: none; z-index: 6; display: grid; place-items: center; }
-.joystick-knob { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(180deg, #ffc0dc, var(--pink)); box-shadow: 0 4px 10px rgba(200, 80, 140, .4); pointer-events: none; transition: transform .05s; }
+/* 左下の ひろい ばしょ が スティックの うけつけ。見える スティックは ちいさく */
+.joy-zone { position: absolute; left: 0; bottom: 0; width: 55%; height: 40%; z-index: 6; touch-action: none; }
+.joystick { position: absolute; width: 92px; height: 92px; margin: 0 0 -46px -46px; border-radius: 50%; background: rgba(255, 255, 255, .32); border: 2px solid rgba(255, 255, 255, .85); box-shadow: inset 0 0 12px rgba(185, 168, 255, .4); display: grid; place-items: center; pointer-events: none; opacity: .75; }
+.joystick.on { opacity: 1; }
+.joystick-knob { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(180deg, #ffc0dc, var(--pink)); box-shadow: 0 3px 8px rgba(200, 80, 140, .4); transition: transform .05s; }
 .joystick-knob.on { transition: none; }
-.joystick-label { position: absolute; bottom: -24px; font-size: .8rem; font-weight: 800; color: var(--ink); background: rgba(255,255,255,.85); padding: 1px 10px; border-radius: 10px; }
-.action-btn { position: absolute; right: 18px; bottom: calc(36px + var(--safe-b)); z-index: 6; width: 132px; min-height: 96px; border-radius: 30px; border: 0; font-weight: 800; font-size: 1rem; color: #fff; background: linear-gradient(180deg, #ffb0d2, var(--pink)); box-shadow: var(--shadow); padding: 10px; line-height: 1.35; }
-.action-btn:disabled { background: rgba(255, 255, 255, .6); color: var(--ink-l); }
-.adv-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(8px + var(--safe-t)) 10px 0; display: flex; gap: 8px; z-index: 5; align-items: flex-start; }
+.action-btn { position: absolute; right: 14px; bottom: calc(24px + var(--safe-b)); z-index: 7; width: 82px; height: 82px; border-radius: 50%; border: 0; font-weight: 800; font-size: .7rem; color: #fff; background: linear-gradient(180deg, #ffb0d2, var(--pink)); box-shadow: var(--shadow); padding: 8px; line-height: 1.25; }
+.action-btn:disabled { background: rgba(255, 255, 255, .5); color: var(--ink-l); font-size: 1.4rem; }
+.adv-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(6px + var(--safe-t)) 8px 0; display: flex; gap: 6px; z-index: 5; align-items: center; }
+.adv-top .btn { min-height: 34px; padding: 4px 11px; font-size: .8rem; }
 .team-strip { display: flex; gap: 4px; }
-.team-strip .tm { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.88); display: grid; place-items: center; box-shadow: var(--shadow); border: 0; padding: 0; }
+.team-strip .tm { width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,.88); display: grid; place-items: center; box-shadow: var(--shadow); border: 0; padding: 0; }
 .float-text { position: absolute; left: 50%; top: 38%; transform: translateX(-50%); z-index: 7; font-weight: 800; font-size: 1.3rem; color: #fff; text-shadow: 0 2px 0 var(--pink-d), 0 0 12px rgba(255, 143, 191, .8); pointer-events: none; animation: floatUp 1.2s ease-out forwards; white-space: nowrap; }
 @keyframes floatUp { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -60px); } }
 

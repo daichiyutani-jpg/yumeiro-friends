@@ -27,24 +27,24 @@ const SPEED = 5;
 const HERO_R = 0.3;
 
 export function forestInteractables(s: SaveData): Interactable[] {
-  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: FOREST.portal.x, z: FOREST.portal.z, label: 'まちへ かえる' }];
+  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: FOREST.portal.x, z: FOREST.portal.z, label: '🌈 まちへ かえる' }];
   for (const c of FOREST.chests) {
     if (s.forest.openedChests.includes(c.id)) continue;
     const locked = 'lockedBy' in c && c.lockedBy && !s.forest.solvedPuzzles.includes(c.lockedBy);
     if (locked) continue; // 謎を解くまでは見えない（puzzle の方を調べる）
-    list.push({ kind: 'chest', id: c.id, x: c.x, z: c.z, label: 'たからばこを あける' });
+    list.push({ kind: 'chest', id: c.id, x: c.x, z: c.z, label: '🎁 あける' });
   }
   for (const p of FOREST.puzzles) {
     if (s.forest.solvedPuzzles.includes(p.id) || p.ability === null) continue;
-    list.push({ kind: 'puzzle', id: p.id, x: p.x, z: p.z, label: `${p.name}を しらべる` });
+    list.push({ kind: 'puzzle', id: p.id, x: p.x, z: p.z, label: '🔎 しらべる' });
   }
   if (!s.forest.solvedPuzzles.includes('p_switch')) {
-    for (const sw of FOREST.switches) list.push({ kind: 'switch', id: sw.id, x: sw.x, z: sw.z, label: `${sw.name}の スイッチを おす` });
+    for (const sw of FOREST.switches) list.push({ kind: 'switch', id: sw.id, x: sw.x, z: sw.z, label: '🌼 おす' });
   }
-  list.push({ kind: 'sign', id: 'sign', x: FOREST.sign.x, z: FOREST.sign.z, label: 'かんばんを よむ' });
+  list.push({ kind: 'sign', id: 'sign', x: FOREST.sign.x, z: FOREST.sign.z, label: '📜 よむ' });
   for (const e of FOREST.encounters) {
     if (s.forest.befriended.includes(e.id)) continue;
-    list.push({ kind: 'encounter', id: e.id, x: e.x, z: e.z, label: 'はなしかける' });
+    list.push({ kind: 'encounter', id: e.id, x: e.x, z: e.z, label: '💬 はなす' });
   }
   return list;
 }

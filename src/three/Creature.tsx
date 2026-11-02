@@ -2,15 +2,24 @@ import { useFrame, type ThreeElements } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import type * as THREE from 'three';
 import type { CreatureLook } from '../game/types';
-import { geo, mat, shadowMat } from './shared';
+import { cgeo, charMat, geo, mat, shadowMat, type CharKind } from './shared';
 
 export type CreatureAnim = 'idle' | 'walk' | 'happy' | 'sleep' | 'pose' | 'love';
 
 type V3 = [number, number, number];
 
-function Part({ g, color, p, s, r, emissive, opacity }: { g: THREE.BufferGeometry; color: string; p: V3; s: number | V3; r?: V3; emissive?: string; opacity?: number }) {
+/** 背景用の かんたんな形を、キャラクター用の なめらかな形に おきかえる */
+function smooth(g: THREE.BufferGeometry): THREE.BufferGeometry {
+  if (g === geo.sphere) return cgeo.sphere;
+  if (g === geo.cone) return cgeo.cone;
+  if (g === geo.cylinder) return cgeo.cylinder;
+  return g;
+}
+
+function Part({ g, color, p, s, r, emissive, opacity, k }: { g: THREE.BufferGeometry; color: string; p: V3; s: number | V3; r?: V3; emissive?: string; opacity?: number; k?: CharKind }) {
   const scale: V3 = typeof s === 'number' ? [s, s, s] : s;
-  return <mesh geometry={g} material={mat(color, { emissive, transparent: opacity })} position={p} scale={scale} rotation={r} />;
+  const material = opacity !== undefined ? mat(color, { emissive, transparent: opacity }) : charMat(color, k ?? (emissive ? 'gloss' : 'fur'), emissive);
+  return <mesh geometry={smooth(g)} material={material} position={p} scale={scale} rotation={r} />;
 }
 
 function Ears({ look }: { look: CreatureLook }) {
@@ -211,35 +220,65 @@ function Extra({ look }: { look: CreatureLook }) {
   }
 }
 
+// あたま（中心 y=0.88）と はなさき（マズル）の 大きさ。顔の パーツを 表面に のせるのに使う
+const HEAD = { y: 0.88, rx: 0.38, ry: 0.34, rz: 0.34 };
+const MUZZLE = { y: 0.8, z: 0.2, rx: 0.2, ry: 0.14, rz: 0.14 };
+function headZ(x: number, y: number): number {
+  return HEAD.rz * Math.sqrt(Math.max(0, 1 - ((y - HEAD.y) / HEAD.ry) ** 2 - (x / HEAD.rx) ** 2));
+}
+function muzzleZ(x: number, y: number): number {
+  return MUZZLE.z + MUZZLE.rz * Math.sqrt(Math.max(0, 1 - ((y - MUZZLE.y) / MUZZLE.ry) ** 2 - (x / MUZZLE.rx) ** 2));
+}
+
 export function CreatureModel({ look }: { look: CreatureLook }) {
   const { body, belly } = look;
   return (
     <group scale={look.scale ?? 1}>
-      {/* からだ */}
+      {/* からだ と むねの ふわふわ */}
       <Part g={geo.sphere} color={body} p={[0, 0.36, 0]} s={[0.34, 0.33, 0.3]} />
       <Part g={geo.sphere} color={belly} p={[0, 0.34, 0.14]} s={[0.22, 0.22, 0.18]} />
-      {/* あし */}
-      {[-1, 1].map((d) => (
-        <Part key={d} g={geo.sphere} color={body} p={[d * 0.15, 0.07, 0.08]} s={[0.09, 0.07, 0.11]} />
+      {[-2, -1, 0, 1, 2].map((i) => (
+        <Part key={`fl${i}`} g={geo.sphere} color={belly} p={[i * 0.055, 0.6 - Math.abs(i) * 0.025, 0.2 - Math.abs(i) * 0.02]} s={[0.06, 0.055, 0.045]} />
       ))}
-      {/* うで */}
+      {/* あし（ゆびの ふくらみ つき） */}
       {[-1, 1].map((d) => (
-        <Part key={`a${d}`} g={geo.sphere} color={body} p={[d * 0.3, 0.38, 0.08]} s={[0.07, 0.1, 0.07]} />
-      ))}
-      {/* あたま */}
-      <Part g={geo.sphere} color={body} p={[0, 0.88, 0]} s={[0.38, 0.34, 0.34]} />
-      <Part g={geo.sphere} color={belly} p={[0, 0.8, 0.2]} s={[0.2, 0.14, 0.14]} />
-      {/* め */}
-      {[-1, 1].map((d) => (
-        <group key={`e${d}`}>
-          <Part g={geo.sphere} color="#3a2a4a" p={[d * 0.13, 0.9, 0.3]} s={[0.05, 0.065, 0.03]} />
-          <Part g={geo.sphere} color="#ffffff" p={[d * 0.13 + 0.015, 0.92, 0.325]} s={0.017} />
+        <group key={d} position={[d * 0.15, 0.07, 0.08]}>
+          <Part g={geo.sphere} color={body} p={[0, 0, 0]} s={[0.095, 0.072, 0.115]} />
+          {[-1, 0, 1].map((i) => (
+            <Part key={i} g={geo.sphere} color={body} p={[i * 0.034, -0.012, 0.098]} s={[0.024, 0.026, 0.022]} />
+          ))}
         </group>
       ))}
-      {/* はな・ほっぺ */}
-      <Part g={geo.sphere} color="#7a4a5a" p={[0, 0.83, 0.335]} s={[0.025, 0.018, 0.015]} />
+      {/* うで（さきに あかるい にくきゅう いろ） */}
       {[-1, 1].map((d) => (
-        <Part key={`c${d}`} g={geo.sphere} color="#ffa5c4" p={[d * 0.22, 0.81, 0.27]} s={[0.055, 0.035, 0.02]} />
+        <group key={`a${d}`} position={[d * 0.3, 0.38, 0.08]} rotation={[0.2, 0, d * 0.25]}>
+          <Part g={geo.sphere} color={body} p={[0, 0, 0]} s={[0.07, 0.11, 0.07]} />
+          <Part g={geo.sphere} color={belly} p={[0, -0.075, 0.025]} s={[0.04, 0.03, 0.035]} />
+        </group>
+      ))}
+      {/* あたま と あたまの うえの くせっ毛 */}
+      <Part g={geo.sphere} color={body} p={[0, HEAD.y, 0]} s={[HEAD.rx, HEAD.ry, HEAD.rz]} />
+      <Part g={geo.sphere} color={belly} p={[0, MUZZLE.y, MUZZLE.z]} s={[MUZZLE.rx, MUZZLE.ry, MUZZLE.rz]} />
+      {[-1, 1].map((d) => (
+        <Part key={`tuft${d}`} g={cgeo.capsule} color={body} p={[d * 0.035, 1.2, 0.1]} s={[0.05, 0.08, 0.04]} r={[0.4, 0, -d * 0.6]} />
+      ))}
+      {/* め：くろめ → ひとみの いろ → どうこう → ひかり 2つ */}
+      {[-1, 1].map((d) => (
+        <group key={`e${d}`} position={[d * 0.13, 0.9, headZ(d * 0.13, 0.9) - 0.014]} rotation={[0, d * 0.36, 0]}>
+          <Part g={geo.sphere} color="#2e1d3c" k="gloss" p={[0, 0, 0]} s={[0.056, 0.07, 0.026]} />
+          <Part g={geo.sphere} color="#6a4a8e" k="gloss" p={[0, -0.014, 0.01]} s={[0.04, 0.046, 0.02]} />
+          <Part g={geo.sphere} color="#170e1e" k="gloss" p={[0, -0.006, 0.02]} s={[0.022, 0.03, 0.012]} />
+          <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[-d * 0.018, 0.024, 0.026]} scale={[0.017, 0.019, 0.01]} />
+          <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[d * 0.017, -0.03, 0.025]} scale={0.008} />
+        </group>
+      ))}
+      {/* はな・くち（ω）・ほっぺ */}
+      <Part g={geo.sphere} color="#6e3a50" k="gloss" p={[0, 0.835, muzzleZ(0, 0.835)]} s={[0.03, 0.02, 0.018]} />
+      {[-1, 1].map((d) => (
+        <Part key={`m${d}`} g={cgeo.arc} color="#6e3a50" k="skin" p={[d * 0.021, 0.8, muzzleZ(d * 0.021, 0.8) - 0.004]} s={[0.021, 0.02, 0.02]} r={[0.25, 0, Math.PI]} />
+      ))}
+      {[-1, 1].map((d) => (
+        <Part key={`c${d}`} g={geo.sphere} color="#ff9fbd" p={[d * 0.22, 0.8, 0.262]} s={[0.056, 0.032, 0.02]} r={[0, d * 0.6, 0]} opacity={0.55} />
       ))}
       <Ears look={look} />
       <Tail look={look} />

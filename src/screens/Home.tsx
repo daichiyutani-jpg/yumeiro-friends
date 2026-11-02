@@ -17,7 +17,7 @@ export function TutorialGuide() {
   if (!text) return null;
   return (
     <div className="guide" role="status">
-      <span style={{ fontSize: '1.5rem' }}>🧚</span>
+      <span className="fairy">🧚</span>
       <span className="grow">{text}</span>
       <button className="btn small skip" onClick={() => patch(skipTutorial)}>
         スキップ

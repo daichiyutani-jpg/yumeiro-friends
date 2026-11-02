@@ -43,12 +43,19 @@ export function useKeyboard(onAction?: () => void): void {
   }, [onAction]);
 }
 
-const RADIUS = 52;
+const RADIUS = 40;
+/** スティックの まんなかの ふだんの 位置（ゾーンの 左下から） */
+const HOME = { x: 64, y: 64 };
 
+/**
+ * 左下の ひろい ばしょ どこを さわっても、そこに スティックが でる（ちいさい 子でも はずしにくい）。
+ * ゆびを はなすと もとの 位置に もどる。
+ */
 export function Joystick() {
-  const base = useRef<HTMLDivElement>(null);
-  const [knob, setKnob] = useState({ x: 0, y: 0, on: false });
+  const zone = useRef<HTMLDivElement>(null);
+  const [st, setSt] = useState({ cx: HOME.x, cy: HOME.y, x: 0, y: 0, on: false });
   const pointer = useRef<number | null>(null);
+  const center = useRef({ x: 0, y: 0 });
 
   useEffect(
     () => () => {
@@ -59,11 +66,8 @@ export function Joystick() {
   );
 
   function update(clientX: number, clientY: number) {
-    const el = base.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    let dx = clientX - (r.left + r.width / 2);
-    let dy = clientY - (r.top + r.height / 2);
+    let dx = clientX - center.current.x;
+    let dy = clientY - center.current.y;
     const len = Math.hypot(dx, dy);
     if (len > RADIUS) {
       dx = (dx / len) * RADIUS;
@@ -72,23 +76,37 @@ export function Joystick() {
     moveInput.x = dx / RADIUS;
     moveInput.y = dy / RADIUS;
     moveInput.joystick = true;
-    setKnob({ x: dx, y: dy, on: true });
+    setSt((p) => ({ ...p, x: dx, y: dy, on: true }));
   }
   function end() {
     pointer.current = null;
     moveInput.joystick = false;
     moveInput.x = moveInput.y = 0;
-    setKnob({ x: 0, y: 0, on: false });
+    setSt({ cx: HOME.x, cy: HOME.y, x: 0, y: 0, on: false });
   }
 
   return (
     <div
-      className="joystick"
-      ref={base}
+      className="joy-zone"
+      ref={zone}
       aria-label="いどう スティック"
       onPointerDown={(e) => {
+        const el = zone.current;
+        if (!el || pointer.current !== null) return;
+        e.preventDefault();
+        const r = el.getBoundingClientRect();
+        // ふちに ちかすぎる 時は すこし 内がわに ずらす
+        const m = RADIUS + 10;
+        const cx = Math.min(Math.max(e.clientX - r.left, m), r.width - m);
+        const cy = Math.min(Math.max(r.bottom - e.clientY, m), r.height - m);
+        center.current = { x: r.left + cx, y: r.bottom - cy };
         pointer.current = e.pointerId;
-        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+        try {
+          el.setPointerCapture?.(e.pointerId);
+        } catch {
+          // つかめない ポインター（古い端末など）でも そのまま うごかせるように する
+        }
+        setSt({ cx, cy, x: 0, y: 0, on: true });
         update(e.clientX, e.clientY);
       }}
       onPointerMove={(e) => {
@@ -98,8 +116,9 @@ export function Joystick() {
       onPointerCancel={end}
       onLostPointerCapture={end}
     >
-      <div className={`joystick-knob${knob.on ? ' on' : ''}`} style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
-      <span className="joystick-label">いどう</span>
+      <div className={`joystick${st.on ? ' on' : ''}`} style={{ left: st.cx, bottom: st.cy }}>
+        <div className={`joystick-knob${st.on ? ' on' : ''}`} style={{ transform: `translate(${st.x}px, ${st.y}px)` }} />
+      </div>
     </div>
   );
 }
