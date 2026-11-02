@@ -3,6 +3,8 @@
 スマートフォンのブラウザ（縦画面）で遊ぶ、オリジナルの3Dファンタジー育成・冒険ゲームです。
 初回に読み込んだあとは**オフラインでも主要な遊びがすべて動きます**。課金・広告・外部通信は一切ありません。
 
+**公開URL: https://daichiyutani-jpg.github.io/yumeiro-friends/** （`main` に push すると GitHub Actions でテスト → ビルド → 公開）
+
 - 技術: Vite 8 / React 19 / TypeScript 7 / three.js 0.187 + @react-three/fiber 9 / zustand 5
 - セーブ: 端末内の IndexedDB（バージョン付き・移行処理あり・本体＋バックアップの2重保存）
 - 3Dモデル・音・アイコンはすべてコードで生成（外部の画像・音声・モデル素材は使っていません）
