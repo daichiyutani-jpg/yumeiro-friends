@@ -55,7 +55,7 @@ export function SettingsScreen() {
       <div className="grid list">
         <Toggle on={save.settings.sound} label="🔊 こうかおん" onChange={(v) => setSetting('sound', v)} />
         <Toggle on={save.settings.bigText} label="🔠 おおきい もじ" onChange={(v) => setSetting('bigText', v)} />
-        <Toggle on={save.settings.reduceMotion} label="🐢 うごきを へらす（まちの なかまが うごかない）" onChange={(v) => setSetting('reduceMotion', v)} />
+        <Toggle on={save.settings.reduceMotion} label="🐢 うごきを へらす（おうちの なかまが うごかない）" onChange={(v) => setSetting('reduceMotion', v)} />
         <button
           className="btn block"
           onClick={() =>
@@ -120,7 +120,7 @@ export function SettingsScreen() {
 
       <div className="section-title">🧹 データの しょきか（テスト用）</div>
       <button className="btn danger block" onClick={() => setReset(1)}>セーブデータを ぜんぶ けす</button>
-      <p className="note">コイン・なかま・まち など すべて きえて、さいしょから に なります。</p>
+      <p className="note">コイン・なかま・おうち など すべて きえて、さいしょから に なります。</p>
 
       <div className="section-title">ℹ️ このゲームについて</div>
       <div className="card note" style={{ margin: 0 }}>

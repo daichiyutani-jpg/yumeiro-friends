@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FURNITURE, OUTFITS } from '../game/data/catalog';
+import { FURNITURE, OUTFITS, isSurface } from '../game/data/catalog';
+import { ownsSurface } from '../game/logic/life';
 import { ALL_ITEMS } from '../game/data/items';
 import type { ItemCategory } from '../game/types';
 import { useGame } from '../state/store';
@@ -11,7 +12,7 @@ const TABS: { id: ItemCategory | 'furniture' | 'outfit'; label: string }[] = [
   { id: 'seed', label: '🌱 たね' },
   { id: 'tool', label: '🧰 どうぐ' },
   { id: 'special', label: '🍡 とくべつ' },
-  { id: 'furniture', label: '🪑 かぐ' },
+  { id: 'furniture', label: '🏠 おうち' },
   { id: 'outfit', label: '👗 ふく' },
 ];
 
@@ -22,6 +23,10 @@ export function ItemsScreen() {
   let list: { key: string; icon: string; name: string; count: number | string; desc: string }[] = [];
   if (tab === 'furniture') {
     list = FURNITURE.map((f) => {
+      if (isSurface(f)) {
+        const using = save.town.wallpaper === f.id || save.town.flooring === f.id;
+        return { key: f.id, icon: f.icon, name: f.name, count: ownsSurface(save, f.id) ? '✔' : 0, desc: using ? 'いま はっているよ' : 'おうちづくりで はりかえられるよ' };
+      }
       const placed = save.town.placed.filter((p) => p.furnitureId === f.id).length;
       const stored = save.town.furniture[f.id] ?? 0;
       return { key: f.id, icon: f.icon, name: f.name, count: stored + placed, desc: `おいてある ${placed} ・ しまってある ${stored}` };

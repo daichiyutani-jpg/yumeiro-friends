@@ -190,6 +190,11 @@ input { font: inherit; }
 .palette { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; }
 .palette .choice { flex: none; display: flex; flex-direction: column; align-items: center; min-width: 78px; font-size: .78rem; gap: 2px; }
 .palette .choice .ic { font-size: 1.6rem; }
+.palette .choice .swatch-mini { width: 34px; height: 26px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 0 1px #f0d6e4; }
+.palette .choice:disabled { opacity: .55; }
+.edit-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 6px; }
+.edit-tabs .btn { flex-direction: column; gap: 0; padding: 4px 2px; min-height: 44px; font-size: .72rem; }
+.edit-tabs .ic { font-size: 1.1rem; line-height: 1.2; }
 .preview-stage { position: relative; height: 300px; border-radius: 24px; overflow: hidden; background: linear-gradient(180deg, #fff1f8, #efe9ff); box-shadow: inset 0 0 0 4px #fff; }
 .world-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); margin-bottom: 10px; border: 0; width: 100%; text-align: left; cursor: pointer; min-height: 76px; }
 .world-card .ic { font-size: 2.2rem; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; }

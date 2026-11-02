@@ -49,6 +49,27 @@ describe('セーブデータの移行と修復', () => {
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.town.helpers).toEqual([]);
   });
+  it('v2(まち)の かぐを おへやに ちぢめ、かべがみ・ゆかを たす', () => {
+    const v2 = { ...createNewSave(look, 1), version: 2 } as Record<string, unknown>;
+    const town = v2.town as Record<string, unknown>;
+    delete town.wallpaper;
+    delete town.flooring;
+    town.placed = [{ uid: 'p1', furnitureId: 'chair', x: 6, z: -6, rot: 2 }, { uid: 'p2', furnitureId: 'lamp', x: 2, z: 1, rot: 0 }];
+    const s = migrate(v2);
+    expect(s.version).toBe(SAVE_VERSION);
+    expect(s.town.wallpaper).toBe('wp_cream');
+    expect(s.town.flooring).toBe('fl_wood');
+    expect(s.town.placed[0]).toMatchObject({ x: 4.5, z: -4.5, rot: 2 });
+    expect(s.town.placed[1]).toMatchObject({ x: 1.5, z: 1 });
+  });
+  it('もっていない かべがみは さいしょの物に もどす', () => {
+    const raw = createNewSave(look, 1) as unknown as { town: Record<string, unknown> };
+    raw.town.wallpaper = 'wp_star';
+    raw.town.flooring = 'nothing';
+    const s = migrate(raw);
+    expect(s.town.wallpaper).toBe('wp_cream');
+    expect(s.town.flooring).toBe('fl_wood');
+  });
   it('マイナスの所持数や存在しないIDを直す', () => {
     const raw = createNewSave(look, 1) as unknown as Record<string, unknown>;
     raw.coins = -50;

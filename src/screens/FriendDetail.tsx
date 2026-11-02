@@ -157,7 +157,7 @@ export function FriendDetailScreen() {
               {inTeam ? 'チームから はずす' : '🐾 ぼうけんの チームに いれる'}
             </button>
             <button className="btn block" onClick={() => apply((s, n) => toggleHelper(s, f.uid, n))}>
-              {helping ? '🔍 おてつだいを おやすみ する' : '🔍 まちで そざいさがしを たのむ'}
+              {helping ? '🔍 おてつだいを おやすみ する' : '🔍 おそとで そざいさがしを たのむ'}
             </button>
           </div>
         </>

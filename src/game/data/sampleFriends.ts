@@ -7,6 +7,8 @@ export interface SampleFriend {
   equipped: Record<OutfitSlot, string | null>;
   friends: { uid: string; speciesId: string }[];
   placed: PlacedFurniture[];
+  wallpaper: string;
+  flooring: string;
   /** おためし交換で 相手が出してくれる物 */
   offers: string[];
 }
@@ -21,14 +23,18 @@ export const SAMPLE_FRIENDS: SampleFriend[] = [
       { uid: 'm2', speciesId: 'ribowan' },
       { uid: 'm3', speciesId: 'hanajika' },
     ],
+    wallpaper: 'wp_stripe',
+    flooring: 'fl_wood',
     placed: [
-      { uid: 'mp1', furnitureId: 'tree_sakura', x: -4, z: -3, rot: 0 },
-      { uid: 'mp2', furnitureId: 'fountain', x: 0, z: 0, rot: 0 },
-      { uid: 'mp3', furnitureId: 'sofa', x: 3, z: -2, rot: 3 },
-      { uid: 'mp4', furnitureId: 'lamp', x: -2, z: 3, rot: 0 },
-      { uid: 'mp5', furnitureId: 'fence', x: 4, z: 4, rot: 0 },
-      { uid: 'mp6', furnitureId: 'fence', x: 5, z: 4, rot: 0 },
-      { uid: 'mp7', furnitureId: 'ball', x: 2, z: 2, rot: 0 },
+      { uid: 'mp1', furnitureId: 'tree_sakura', x: -4, z: -4, rot: 0 },
+      { uid: 'mp2', furnitureId: 'rug_heart', x: 0, z: 0, rot: 0 },
+      { uid: 'mp3', furnitureId: 'sofa', x: 0, z: -3.5, rot: 0 },
+      { uid: 'mp4', furnitureId: 'lamp', x: -4, z: 1, rot: 0 },
+      { uid: 'mp5', furnitureId: 'dresser', x: 3, z: -4, rot: 0 },
+      { uid: 'mp6', furnitureId: 'window', x: -1, z: -5, rot: 0, wall: 'back' },
+      { uid: 'mp7', furnitureId: 'ball', x: 1.5, z: 1.5, rot: 0 },
+      { uid: 'mp8', furnitureId: 'frame', x: -5, z: -1.5, rot: 0, wall: 'left' },
+      { uid: 'mp9', furnitureId: 'garland', x: 2.5, z: -5, rot: 0, wall: 'back' },
     ],
     offers: ['star', 'shell', 'cotton'],
   },
@@ -40,11 +46,17 @@ export const SAMPLE_FRIENDS: SampleFriend[] = [
       { uid: 's1', speciesId: 'yukipen' },
       { uid: 's2', speciesId: 'awanya' },
     ],
+    wallpaper: 'wp_star',
+    flooring: 'fl_cloud',
     placed: [
-      { uid: 'sp1', furnitureId: 'slide', x: -3, z: 0, rot: 1 },
-      { uid: 'sp2', furnitureId: 'snowman', x: 3, z: -3, rot: 0 },
-      { uid: 'sp3', furnitureId: 'starlamp', x: 0, z: 3, rot: 0 },
-      { uid: 'sp4', furnitureId: 'bed', x: 4, z: 1, rot: 0 },
+      { uid: 'sp1', furnitureId: 'slide', x: -3, z: 1, rot: 1 },
+      { uid: 'sp2', furnitureId: 'snowman', x: 3, z: -3.5, rot: 0 },
+      { uid: 'sp3', furnitureId: 'starlamp', x: -4, z: -4, rot: 0 },
+      { uid: 'sp4', furnitureId: 'bed', x: 0, z: -3.5, rot: 0 },
+      { uid: 'sp5', furnitureId: 'piano', x: -3.5, z: -2, rot: 1 },
+      { uid: 'sp6', furnitureId: 'clock', x: 1.5, z: -5, rot: 0, wall: 'back' },
+      { uid: 'sp7', furnitureId: 'mirror', x: -5, z: 2.5, rot: 0, wall: 'left' },
+      { uid: 'sp8', furnitureId: 'rug_round', x: 1, z: 1, rot: 0 },
     ],
     offers: ['drop', 'petal', 'clover'],
   },

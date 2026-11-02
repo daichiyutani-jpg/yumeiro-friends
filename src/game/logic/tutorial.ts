@@ -20,9 +20,9 @@ export const TUTORIAL_STEPS: { event: TutorialEvent; text: string }[] = [
   { event: 'moved', text: 'ひだりの まるい スティックを うごかして あるいてみよう' },
   { event: 'chest', text: 'ちかくの たからばこに ちかづいて「あける」を おそう' },
   { event: 'puzzle', text: 'ひだりの「つるの とびら」で、さくらんの はなの ちからを つかおう' },
-  { event: 'returnHome', text: 'はじめの ばしょに ある にじの ゲートから まちへ かえろう' },
+  { event: 'returnHome', text: 'はじめの ばしょに ある にじの ゲートから おうちへ かえろう' },
   { event: 'planted', text: '「おはなばたけ」で たねを うえよう' },
-  { event: 'placed', text: '「まちづくり」で かぐを おいてみよう' },
+  { event: 'placed', text: '「おうちづくり」で かぐを おいてみよう' },
 ];
 
 export function tutorialText(s: SaveData): string | null {

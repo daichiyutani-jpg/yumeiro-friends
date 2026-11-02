@@ -7,7 +7,7 @@ import { useGame, type ScreenId } from '../state/store';
 import { Creature } from '../three/Creature';
 import { Sparkles } from '../three/Effects';
 import { Stage } from '../three/Stage';
-import { TownScene } from '../three/TownScene';
+import { RoomScene } from '../three/RoomScene';
 import { Modal, useNow, useSave } from '../ui/common';
 
 export function TutorialGuide() {
@@ -30,7 +30,7 @@ const MENU: { id: ScreenId; icon: string; label: string }[] = [
   { id: 'friends', icon: '🐰', label: 'なかま' },
   { id: 'dressup', icon: '👗', label: 'きせかえ' },
   { id: 'garden', icon: '🌷', label: 'おはなばたけ' },
-  { id: 'town', icon: '🏡', label: 'まちづくり' },
+  { id: 'town', icon: '🏠', label: 'おうちづくり' },
   { id: 'eggs', icon: '🥚', label: 'たまご' },
   { id: 'shop', icon: '🛍️', label: 'おみせ' },
   { id: 'minigame', icon: '🌼', label: 'はなつみ' },
@@ -60,18 +60,18 @@ export function HomeScreen() {
 
   return (
     <div className="screen home-screen">
-      <Stage camera={[0, 15, 16]} fov={50} className="canvas-wrap home-canvas">
-        <TownScene
+      <Stage camera={[8, 9, 11]} fov={50} className="canvas-wrap home-canvas">
+        <RoomScene
           mode="home"
           placed={save.town.placed}
+          wallpaper={save.town.wallpaper}
+          flooring={save.town.flooring}
           friends={friends}
-          plots={plots}
           player={save.player}
           equipped={save.equipped}
           princess={save.princess}
           reduceMotion={settings.reduceMotion}
           onFriend={(uid) => go('friend', uid)}
-          onPlot={() => go('garden')}
         />
       </Stage>
       <div className="hud-top">

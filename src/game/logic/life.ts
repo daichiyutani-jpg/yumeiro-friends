@@ -1,8 +1,8 @@
-// 卵・花壇・町・おてつだい など、時間がかかる遊びのロジック
-import { getEgg, getFurniture } from '../data/catalog';
+// 卵・花壇・おうち・おてつだい など、時間がかかる遊びのロジック
+import { getEgg, getFurniture, isSurface } from '../data/catalog';
 import { getSeed } from '../data/items';
 import { getSpecies } from '../data/species';
-import type { EggDef, Rarity, Result, SaveData } from '../types';
+import type { EggDef, FurnitureDef, Rarity, Result, SaveData } from '../types';
 import { GARDEN_PLOTS, MAX_EGG_SLOTS, addItemsMut, clone, fail, newUid, ok, removeItemsMut } from './core';
 import { addFriendMut, getFriend, markDex } from './friends';
 
@@ -102,23 +102,29 @@ export function harvest(state: SaveData, index: number, now: number): Result {
   return ok(s, 'しゅうかく できたよ！', seed?.harvest ?? {});
 }
 
-// ---------- 町づくり ----------
+// ---------- おうちづくり ----------
 
-export const TOWN_BOUNDS = { minX: -6, maxX: 6, minZ: -6, maxZ: 6 };
+/** おへやの ゆかで ものを おける はんい（0.5 ごとに そろえる） */
+export const ROOM_BOUNDS = { minX: -4.5, maxX: 4.5, minZ: -4.5, maxZ: 4.5 };
+/** かべの いち。おくの かべは z = -ROOM_WALL、ひだりの かべは x = -ROOM_WALL */
+export const ROOM_WALL = 5;
 export const MAX_PLACED = 40;
+
+export type WallSide = 'back' | 'left';
 
 function snap(v: number): number {
   return Math.round(v * 2) / 2;
 }
+const clampX = (v: number) => Math.max(ROOM_BOUNDS.minX, Math.min(ROOM_BOUNDS.maxX, snap(v)));
+const clampZ = (v: number) => Math.max(ROOM_BOUNDS.minZ, Math.min(ROOM_BOUNDS.maxZ, snap(v)));
 
-export function clampToTown(x: number, z: number): { x: number; z: number } {
-  const cx = Math.max(TOWN_BOUNDS.minX, Math.min(TOWN_BOUNDS.maxX, snap(x)));
-  const cz = Math.max(TOWN_BOUNDS.minZ, Math.min(TOWN_BOUNDS.maxZ, snap(z)));
-  return { x: cx, z: cz };
+export function clampToRoom(x: number, z: number): { x: number; z: number } {
+  return { x: clampX(x), z: clampZ(z) };
 }
 
-export function inTown(x: number, z: number): boolean {
-  return x >= TOWN_BOUNDS.minX && x <= TOWN_BOUNDS.maxX && z >= TOWN_BOUNDS.minZ && z <= TOWN_BOUNDS.maxZ;
+/** かべの かざりの いち。back は x だけ、left は z だけ うごく */
+export function wallPos(wall: WallSide, x: number, z: number): { x: number; z: number } {
+  return wall === 'back' ? { x: clampX(x), z: -ROOM_WALL } : { x: -ROOM_WALL, z: clampZ(z) };
 }
 
 /** しまってある家具の数（置いている分は含まない） */
@@ -126,28 +132,49 @@ export function storedFurniture(s: SaveData, id: string): number {
   return s.town.furniture[id] ?? 0;
 }
 
-export function placeFurniture(state: SaveData, furnitureId: string, x: number, z: number): Result {
-  if (!getFurniture(furnitureId)) return fail('その かぐは ないよ');
-  if (!Number.isFinite(x) || !Number.isFinite(z)) return fail('おけない ばしょだよ');
+/** かべがみ・ゆかを もっているか（さいしょの物は いつでも つかえる） */
+export function ownsSurface(s: SaveData, id: string): boolean {
+  const def = getFurniture(id);
+  return !!def && isSurface(def) && (!!def.starter || storedFurniture(s, id) > 0);
+}
+
+function placeAt(def: FurnitureDef, x: number, z: number, wall?: WallSide): { x: number; z: number; wall?: WallSide } | string {
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return 'おけない ばしょだよ';
+  if (def.kind === 'wall') {
+    if (!wall) return 'かべの かざりは かべを タップして かけてね';
+    return { ...wallPos(wall, x, z), wall };
+  }
+  if (wall) return 'かぐは ゆかを タップして おいてね';
+  return clampToRoom(x, z);
+}
+
+export function placeFurniture(state: SaveData, furnitureId: string, x: number, z: number, wall?: WallSide): Result {
+  const def = getFurniture(furnitureId);
+  if (!def) return fail('その かぐは ないよ');
+  if (isSurface(def)) return fail('かべがみや ゆかは「はりかえる」で つかってね');
   if (storedFurniture(state, furnitureId) <= 0) return fail('しまってある かぐが ないよ');
   if (state.town.placed.length >= MAX_PLACED) return fail(`かぐは ${MAX_PLACED}こ まで おけるよ`);
+  const pos = placeAt(def, x, z, wall);
+  if (typeof pos === 'string') return fail(pos);
   const s = clone(state);
-  const pos = clampToTown(x, z);
   s.town.furniture[furnitureId] -= 1;
   if (s.town.furniture[furnitureId] <= 0) delete s.town.furniture[furnitureId];
   const uid = newUid(s, 'p');
-  s.town.placed.push({ uid, furnitureId, x: pos.x, z: pos.z, rot: 0 });
+  s.town.placed.push({ uid, furnitureId, rot: 0, ...pos });
   return ok(s, undefined, uid);
 }
 
-export function moveFurniture(state: SaveData, uid: string, x: number, z: number): Result {
-  if (!Number.isFinite(x) || !Number.isFinite(z)) return fail('おけない ばしょだよ');
+export function moveFurniture(state: SaveData, uid: string, x: number, z: number, wall?: WallSide): Result {
+  const cur = state.town.placed.find((q) => q.uid === uid);
+  const def = cur && getFurniture(cur.furnitureId);
+  if (!cur || !def) return fail('かぐが みつからないよ');
+  const pos = placeAt(def, x, z, wall);
+  if (typeof pos === 'string') return fail(pos);
   const s = clone(state);
-  const p = s.town.placed.find((q) => q.uid === uid);
-  if (!p) return fail('かぐが みつからないよ');
-  const pos = clampToTown(x, z);
+  const p = s.town.placed.find((q) => q.uid === uid)!;
   p.x = pos.x;
   p.z = pos.z;
+  if (pos.wall) p.wall = pos.wall;
   return ok(s);
 }
 
@@ -155,6 +182,7 @@ export function rotateFurniture(state: SaveData, uid: string): Result {
   const s = clone(state);
   const p = s.town.placed.find((q) => q.uid === uid);
   if (!p) return fail('かぐが みつからないよ');
+  if (p.wall) return fail('かべの かざりは まわせないよ');
   p.rot = (p.rot + 1) % 4;
   return ok(s);
 }
@@ -168,7 +196,18 @@ export function storeFurniture(state: SaveData, uid: string): Result {
   return ok(s, 'かぐを しまったよ');
 }
 
-// ---------- おてつだい（町に いる なかまが 素材を みつける） ----------
+/** かべがみ・ゆかを はりかえる。なくならないので、あとで もとに もどせる */
+export function setSurface(state: SaveData, id: string): Result {
+  const def = getFurniture(id);
+  if (!def || !isSurface(def)) return fail('はりかえられないよ');
+  if (!ownsSurface(state, id)) return fail(`${def.name}を もっていないよ`);
+  const s = clone(state);
+  if (def.kind === 'wallpaper') s.town.wallpaper = id;
+  else s.town.flooring = id;
+  return ok(s, `${def.name}に はりかえたよ`);
+}
+
+// ---------- おてつだい（おそとで なかまが 素材を みつける） ----------
 
 export const HELPER_INTERVAL = 20 * MIN;
 export const HELPER_MAX_FINDS = 6;
@@ -188,7 +227,7 @@ export function toggleHelper(state: SaveData, friendUid: string, now: number): R
   }
   if (s.town.helpers.length >= MAX_HELPERS) return fail(`おてつだいは ${MAX_HELPERS}にん までだよ`);
   s.town.helpers.push({ uid: friendUid, startedAt: now });
-  return ok(s, 'まちで そざいを さがしてくれるよ');
+  return ok(s, 'おそとで そざいを さがしてくれるよ');
 }
 
 /** おてつだいで みつけた素材を受け取る。何が見つかるかは rng で決める */

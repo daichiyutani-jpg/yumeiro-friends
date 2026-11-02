@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { FURNITURE, OUTFITS, SLOT_INFO } from '../game/data/catalog';
+import { FURNITURE, OUTFITS, SLOT_INFO, isSurface } from '../game/data/catalog';
 import { FOODS, SEEDS, SPECIALS, TOOLS } from '../game/data/items';
 import { hasItems } from '../game/logic/core';
+import { ownsSurface } from '../game/logic/life';
 import { buyFurniture, buyItem, buyOutfit, craftFurniture, craftOutfit } from '../game/logic/shop';
-import type { Result, SaveData } from '../game/types';
+import type { FurnitureDef, Result, SaveData } from '../game/types';
 import { useGame } from '../state/store';
 import { Confirm, CostList, Screen, useSave } from '../ui/common';
 
@@ -13,7 +14,7 @@ const TABS: [Tab, string][] = [
   ['seed', '🌱 たね'],
   ['tool', '🧰 どうぐ'],
   ['outfit', '👗 ふく'],
-  ['furniture', '🪑 かぐ'],
+  ['furniture', '🏠 おうち'],
   ['atelier', '🧵 アトリエ'],
 ];
 
@@ -21,6 +22,15 @@ interface Pending {
   title: string;
   cost: Record<string, number>;
   run: (s: SaveData) => Result;
+}
+
+const KIND_NOTE: Partial<Record<FurnitureDef['kind'], string>> = { wall: 'かべに かける', rug: 'ゆかに しく', wallpaper: 'かべがみ', flooring: 'ゆか' };
+
+/** もっている数と、どこに つかう物か */
+function furnitureNote(save: SaveData, f: FurnitureDef): string {
+  if (isSurface(f)) return `${KIND_NOTE[f.kind]}・はりかえて つかう`;
+  const n = (save.town.furniture[f.id] ?? 0) + save.town.placed.filter((p) => p.furnitureId === f.id).length;
+  return [`もってる ${n}`, KIND_NOTE[f.kind], f.rest && 'なかまが つかうよ'].filter(Boolean).join(' ・ ');
 }
 
 export function ShopScreen() {
@@ -87,21 +97,27 @@ export function ShopScreen() {
             );
           })}
         {tab === 'furniture' &&
-          FURNITURE.filter((f) => f.price !== undefined).map((f) => (
-            <div key={f.id} className="item-tile">
-              <span className="ic">{f.icon}</span>
-              <div className="grow">
-                <div className="n">{f.name}</div>
-                <div className="muted" style={{ fontSize: '.78rem' }}>もってる {(save.town.furniture[f.id] ?? 0) + save.town.placed.filter((p) => p.furnitureId === f.id).length}{f.rest ? ' ・ なかまが つかうよ' : ''}</div>
+          FURNITURE.filter((f) => f.price !== undefined).map((f) => {
+            const surface = isSurface(f);
+            const have = surface && ownsSurface(save, f.id);
+            return (
+              <div key={f.id} className="item-tile">
+                <span className="ic">{f.icon}</span>
+                <div className="grow">
+                  <div className="n">{f.name}</div>
+                  <div className="muted" style={{ fontSize: '.78rem' }}>{furnitureNote(save, f)}</div>
+                </div>
+                {have ? <span className="tag ok">もってる</span> : (
+                  <button className="btn small primary" disabled={save.coins < f.price!} onClick={() => ask({ title: `${f.name}を かう？`, cost: { coins: f.price! }, run: (s) => buyFurniture(s, f.id) })}>
+                    🪙{f.price}
+                  </button>
+                )}
               </div>
-              <button className="btn small primary" disabled={save.coins < f.price!} onClick={() => ask({ title: `${f.name}を かう？`, cost: { coins: f.price! }, run: (s) => buyFurniture(s, f.id) })}>
-                🪙{f.price}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         {tab === 'atelier' && (
           <>
-            <p className="note">あつめた そざいで ふくや かぐを つくれるよ。</p>
+            <p className="note">あつめた そざいで ふくや おうちの かぐ・かべがみを つくれるよ。</p>
             {OUTFITS.filter((o) => o.craft).map((o) => {
               const have = save.ownedOutfits.includes(o.id);
               return (
@@ -122,18 +138,26 @@ export function ShopScreen() {
                 </div>
               );
             })}
-            {FURNITURE.filter((f) => f.craft).map((f) => (
-              <div key={f.id} className="card" style={{ marginBottom: 0 }}>
-                <div className="row">
-                  <span style={{ fontSize: '1.7rem' }}>{f.icon}</span>
-                  <b className="grow">{f.name}（かぐ）</b>
+            {FURNITURE.filter((f) => f.craft).map((f) => {
+              const have = isSurface(f) && ownsSurface(save, f.id);
+              return (
+                <div key={f.id} className="card" style={{ marginBottom: 0 }}>
+                  <div className="row">
+                    <span style={{ fontSize: '1.7rem' }}>{f.icon}</span>
+                    <b className="grow">{f.name}（{KIND_NOTE[f.kind] ?? 'かぐ'}）</b>
+                    {have && <span className="tag ok">もってる</span>}
+                  </div>
+                  {!have && (
+                    <>
+                      <CostList cost={f.craft!} save={save} />
+                      <button className="btn lav block small" disabled={!hasItems(save, f.craft!)} onClick={() => ask({ title: `${f.name}を つくる？`, cost: f.craft!, run: (s) => craftFurniture(s, f.id) })}>
+                        🔨 つくる
+                      </button>
+                    </>
+                  )}
                 </div>
-                <CostList cost={f.craft!} save={save} />
-                <button className="btn lav block small" disabled={!hasItems(save, f.craft!)} onClick={() => ask({ title: `${f.name}を つくる？`, cost: f.craft!, run: (s) => craftFurniture(s, f.id) })}>
-                  🔨 つくる
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>

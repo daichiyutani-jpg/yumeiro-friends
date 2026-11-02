@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { MATERIALS, itemIcon, itemName } from '../game/data/items';
 import { SAMPLE_FRIENDS, type SampleFriend } from '../game/data/sampleFriends';
 import { Stage } from '../three/Stage';
-import { TownScene } from '../three/TownScene';
+import { RoomScene } from '../three/RoomScene';
 import { Modal, Screen, useOnline, useSave } from '../ui/common';
 
 type Tab = 'list' | 'visit' | 'trade' | 'qr';
@@ -63,7 +63,7 @@ export function SocialScreen() {
         いまは {online ? 'オンライン' : 'オフライン'}。ほんものの ともだち きのうは じゅんびちゅう なので、どちらでも おなじ です。
       </p>
       <div className="tabs">
-        {([['list', '👭 ともだち'], ['visit', '🏡 まちを みる'], ['trade', '🎁 おためしこうかん'], ['qr', '📷 QRとうろく']] as [Tab, string][]).map(([k, l]) => (
+        {([['list', '👭 ともだち'], ['visit', '🏠 おうちを みる'], ['trade', '🎁 おためしこうかん'], ['qr', '📷 QRとうろく']] as [Tab, string][]).map(([k, l]) => (
           <button key={k} className={`btn small${tab === k ? ' on' : ''}`} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -92,19 +92,20 @@ export function SocialScreen() {
             ))}
           </div>
           <div className="preview-stage visit-stage">
-            <Stage camera={[0, 10, 15.5]} fov={48}>
-              <TownScene
+            <Stage camera={[8, 9, 11]} fov={48}>
+              <RoomScene
                 mode="visit"
                 placed={visit.placed}
+                wallpaper={visit.wallpaper}
+                flooring={visit.flooring}
                 friends={visit.friends}
-                plots={Array.from({ length: 6 }, () => ({ seedId: 'seed_sakura', progress: 1 }))}
                 player={visit.player}
                 equipped={visit.equipped}
                 reduceMotion={save.settings.reduceMotion}
               />
             </Stage>
           </div>
-          <p className="note">みるだけ の ばしょ です。ともだちの まちを かえることは できません。</p>
+          <p className="note">みるだけ の ばしょ です。ともだちの おうちを かえることは できません。</p>
         </>
       )}
 

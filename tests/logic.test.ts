@@ -9,9 +9,10 @@ import {
 } from '../src/game/logic/friends';
 import {
   buyEgg, collectHelpers, eggOdds, harvest, hatchEgg, placeFurniture, plant, plotStatus, rollEgg, storeFurniture, moveFurniture, toggleHelper, HELPER_INTERVAL,
+  ownsSurface, rotateFurniture, setSurface, ROOM_WALL,
 } from '../src/game/logic/life';
 import { befriend, checkSwitchOrder, openChest, pickUp, solvePuzzle } from '../src/game/logic/adventure';
-import { buyItem, canTransform, craftOutfit, equip, finishMinigame, transform } from '../src/game/logic/shop';
+import { buyFurniture, buyItem, canTransform, craftOutfit, equip, finishMinigame, transform } from '../src/game/logic/shop';
 import { advanceClock, MAX_JUMP } from '../src/game/logic/time';
 import { advanceTutorial } from '../src/game/logic/tutorial';
 import type { SaveData } from '../src/game/types';
@@ -228,14 +229,14 @@ describe('花壇', () => {
   });
 });
 
-describe('町づくり', () => {
-  it('家具を置く・動かす・しまう。範囲外には置けない', () => {
+describe('おうちづくり', () => {
+  it('家具を置く・動かす・しまう。へやの外には置けない', () => {
     let s = fresh();
     const r = placeFurniture(s, 'chair', 100, -100);
     s = must(r);
     const p = s.town.placed[0];
-    expect(p.x).toBe(6);
-    expect(p.z).toBe(-6);
+    expect(p.x).toBe(4.5);
+    expect(p.z).toBe(-4.5);
     expect(s.town.furniture.chair).toBeUndefined();
     expect(placeFurniture(s, 'chair', 0, 0).ok).toBe(false); // もう しまってある いすが無い
     s = must(moveFurniture(s, p.uid, 1.2, 2.9));
@@ -243,6 +244,32 @@ describe('町づくり', () => {
     s = must(storeFurniture(s, p.uid));
     expect(s.town.placed.length).toBe(0);
     expect(s.town.furniture.chair).toBe(1);
+  });
+  it('かべの かざりは かべにだけ かけられ、かべに そって うごく', () => {
+    let s = fresh();
+    expect(placeFurniture(s, 'frame', 1, 1).ok).toBe(false); // ゆかには おけない
+    expect(placeFurniture(s, 'chair', 1, 1, 'back').ok).toBe(false); // かぐは かべに かけない
+    s = must(placeFurniture(s, 'frame', 9, 3, 'back'));
+    const p = s.town.placed[0];
+    expect(p).toMatchObject({ wall: 'back', x: 4.5, z: -ROOM_WALL });
+    s = must(moveFurniture(s, p.uid, 0, 1.3, 'left'));
+    expect(s.town.placed[0]).toMatchObject({ wall: 'left', x: -ROOM_WALL, z: 1.5 });
+    expect(rotateFurniture(s, p.uid).ok).toBe(false);
+  });
+  it('かべがみ・ゆかは もっている物だけ はりかえられ、なくならない', () => {
+    let s = fresh();
+    expect(s.town.wallpaper).toBe('wp_cream');
+    expect(setSurface(s, 'wp_stripe').ok).toBe(false);
+    s.coins = 1000;
+    s = must(buyFurniture(s, 'wp_stripe'));
+    expect(buyFurniture(s, 'wp_stripe').ok).toBe(false); // 2まいめは かえない
+    s = must(setSurface(s, 'wp_stripe'));
+    expect(s.town.wallpaper).toBe('wp_stripe');
+    s = must(setSurface(s, 'wp_cream'));
+    expect(s.town.wallpaper).toBe('wp_cream');
+    expect(ownsSurface(s, 'wp_stripe')).toBe(true);
+    expect(placeFurniture(s, 'wp_stripe', 0, 0).ok).toBe(false);
+    expect(setSurface(s, 'chair').ok).toBe(false);
   });
   it('おてつだいは時間で素材を見つけ、上限がある', () => {
     let s = fresh();

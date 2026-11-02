@@ -322,8 +322,8 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       );
     case 'portal':
       return (
-        <Modal title="まちへ かえる？">
-          <p className="center">にじの ゲートを とおって、じぶんの まちへ かえるよ。</p>
+        <Modal title="おうちへ かえる？">
+          <p className="center">にじの ゲートを とおって、じぶんの おうちへ かえるよ。</p>
           <div className="actions">
             <button className="btn primary block" onClick={onHome}>🏡 かえる</button>
             <button className="btn block" onClick={close}>まだ たんけんする</button>
@@ -342,7 +342,7 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
           <p className="note">そうさ：ひだりの スティックで あるく ／ みぎの ボタンで しらべる ／ いきたい ばしょを タップしても あるけるよ（PC は やじるしキー と スペース）</p>
           <div className="actions">
             <button className="btn block" onClick={() => setDialog({ kind: 'team' })}>🔁 チームを かえる</button>
-            <button className="btn lav block" onClick={onHome}>🏡 まちへ かえる</button>
+            <button className="btn lav block" onClick={onHome}>🏡 おうちへ かえる</button>
           </div>
         </Modal>
       );

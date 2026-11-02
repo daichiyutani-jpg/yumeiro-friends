@@ -1,9 +1,10 @@
 // お店・アトリエ（クラフト）・着せ替え・ミニゲームの報酬
-import { getFurniture, getOutfit } from '../data/catalog';
+import { getFurniture, getOutfit, isSurface } from '../data/catalog';
 import { getItem } from '../data/items';
 import type { OutfitSlot, PlayerLook, Result, SaveData } from '../types';
 import { addItemsMut, clone, fail, ok, removeItemsMut } from './core';
 import { gainTeamExpMut } from './friends';
+import { ownsSurface } from './life';
 
 export function buyItem(state: SaveData, itemId: string, qty = 1): Result {
   const item = getItem(itemId);
@@ -38,6 +39,7 @@ export function craftOutfit(state: SaveData, outfitId: string): Result {
 export function buyFurniture(state: SaveData, furnitureId: string): Result {
   const f = getFurniture(furnitureId);
   if (!f || f.price === undefined) return fail('その かぐは うっていないよ');
+  if (isSurface(f) && ownsSurface(state, furnitureId)) return fail('もう もっているよ');
   const s = clone(state);
   if (!removeItemsMut(s, { coins: f.price })) return fail('コインが たりないよ');
   s.town.furniture[furnitureId] = (s.town.furniture[furnitureId] ?? 0) + 1;
@@ -47,6 +49,7 @@ export function buyFurniture(state: SaveData, furnitureId: string): Result {
 export function craftFurniture(state: SaveData, furnitureId: string): Result {
   const f = getFurniture(furnitureId);
   if (!f || !f.craft) return fail('その かぐは つくれないよ');
+  if (isSurface(f) && ownsSurface(state, furnitureId)) return fail('もう もっているよ');
   const s = clone(state);
   if (!removeItemsMut(s, f.craft)) return fail('そざいが たりないよ');
   s.town.furniture[furnitureId] = (s.town.furniture[furnitureId] ?? 0) + 1;

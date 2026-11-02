@@ -1,8 +1,8 @@
-import { STARTER_OUTFITS } from '../data/catalog';
+import { DEFAULT_FLOORING, DEFAULT_WALLPAPER, STARTER_OUTFITS } from '../data/catalog';
 import { getItem } from '../data/items';
 import type { PlayerLook, Result, SaveData } from '../types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const MAX_TEAM = 3;
 export const MAX_STACK = 999;
 export const MAX_COINS = 999_999;
@@ -41,7 +41,7 @@ export function createNewSave(look: PlayerLook, realNow: number): SaveData {
     team: [],
     dex: {},
     forest: { openedChests: [], solvedPuzzles: [], befriended: [], picked: {}, visits: 0 },
-    town: { placed: [], furniture: { chair: 1, pot: 2, fence: 2 }, helpers: [], helperFound: 0 },
+    town: { placed: [], wallpaper: DEFAULT_WALLPAPER, flooring: DEFAULT_FLOORING, furniture: { chair: 1, pot: 2, rug_round: 1, frame: 1 }, helpers: [], helperFound: 0 },
     garden: Array.from({ length: GARDEN_PLOTS }, () => ({ seedId: null, plantedAt: 0, readyAt: 0 })),
     eggs: [],
     tutorial: { step: 1, done: false },

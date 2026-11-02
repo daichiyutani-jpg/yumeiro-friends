@@ -27,7 +27,7 @@ const SPEED = 5;
 const HERO_R = 0.3;
 
 export function forestInteractables(s: SaveData): Interactable[] {
-  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: FOREST.portal.x, z: FOREST.portal.z, label: '🌈 まちへ かえる' }];
+  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: FOREST.portal.x, z: FOREST.portal.z, label: '🌈 おうちへ かえる' }];
   for (const c of FOREST.chests) {
     if (s.forest.openedChests.includes(c.id)) continue;
     const locked = 'lockedBy' in c && c.lockedBy && !s.forest.solvedPuzzles.includes(c.lockedBy);
@@ -155,7 +155,7 @@ function Scenery({ solved, onGround }: { solved: string[]; onGround: (e: ThreeEv
           <mesh key={c} geometry={geo.circle} material={mat(c)} position={[-0.35 + i * 0.35, 1.1, 0.05]} scale={0.12} />
         ))}
       </group>
-      {/* にじの ゲート（まちへ かえる） */}
+      {/* にじの ゲート（おうちへ かえる） */}
       <group position={[FOREST.portal.x, 0, FOREST.portal.z]}>
         {['#ff9ec7', '#ffd84d', '#a8ead2', '#8fd3ff', '#cdb8ff'].map((c, i) => (
           <mesh key={c} geometry={geo.torus} material={mat(c)} position={[0, 0, 0]} scale={[1.9 - i * 0.18, 1.9 - i * 0.18, 0.5]} />

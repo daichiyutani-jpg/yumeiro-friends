@@ -1,9 +1,10 @@
 // セーブデータの移行と整合性チェック。読み込んだデータは必ずここを通す。
-import { getFurniture, getOutfit } from '../data/catalog';
+import { DEFAULT_FLOORING, DEFAULT_WALLPAPER, getFurniture, getOutfit, isSurface } from '../data/catalog';
 import { getItem } from '../data/items';
 import { hasSpecies } from '../data/species';
 import type { SaveData } from '../types';
 import { GARDEN_PLOTS, MAX_COINS, MAX_STACK, MAX_TEAM, SAVE_VERSION, createNewSave } from './core';
+import { clampToRoom, ownsSurface, wallPos } from './life';
 
 type Raw = Record<string, unknown>;
 
@@ -14,12 +15,20 @@ const count = (v: unknown, max: number): number => Math.max(0, Math.min(max, Mat
 /**
  * バージョンごとの移行。新しい項目を足したら、ここに1段ふやす。
  * v1 → v2: おてつだい（town.helpers / helperFound）と 大きい文字設定（settings.bigText）を追加。
+ * v2 → v3: まちづくり → おうちづくり。かべがみ・ゆかを足し、おそとの ひろさ(±6)で おいた かぐを おへや(±4.5)に ちぢめる。
  */
 const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   1: (d) => {
     const town = isObj(d.town) ? d.town : {};
     const settings = isObj(d.settings) ? d.settings : {};
     return { ...d, version: 2, town: { helpers: [], helperFound: 0, ...town }, settings: { bigText: false, ...settings } };
+  },
+  2: (d) => {
+    const town = isObj(d.town) ? d.town : {};
+    const placed = (Array.isArray(town.placed) ? town.placed : []).map((p) =>
+      isObj(p) ? { ...p, x: Math.round(num(p.x, 0) * 0.75 * 2) / 2, z: Math.round(num(p.z, 0) * 0.75 * 2) / 2 } : p,
+    );
+    return { ...d, version: 3, town: { wallpaper: DEFAULT_WALLPAPER, flooring: DEFAULT_FLOORING, ...town, placed } };
   },
 };
 
@@ -116,9 +125,21 @@ export function sanitize(d: Raw): SaveData {
     if (c > 0) s.town.furniture[k] = c;
   }
   s.town.placed = (Array.isArray(town.placed) ? town.placed : []).flatMap((p) => {
-    if (!isObj(p) || typeof p.uid !== 'string' || typeof p.furnitureId !== 'string' || !getFurniture(p.furnitureId)) return [];
-    return [{ uid: p.uid, furnitureId: p.furnitureId, x: Math.max(-6, Math.min(6, num(p.x, 0))), z: Math.max(-6, Math.min(6, num(p.z, 0))), rot: count(p.rot, 3) }];
+    if (!isObj(p) || typeof p.uid !== 'string' || typeof p.furnitureId !== 'string') return [];
+    const def = getFurniture(p.furnitureId);
+    if (!def || isSurface(def)) return [];
+    const x = num(p.x, 0);
+    const z = num(p.z, 0);
+    if (def.kind === 'wall') {
+      const wall = p.wall === 'left' ? 'left' : 'back';
+      return [{ uid: p.uid, furnitureId: p.furnitureId, ...wallPos(wall, x, z), rot: 0, wall }];
+    }
+    return [{ uid: p.uid, furnitureId: p.furnitureId, ...clampToRoom(x, z), rot: count(p.rot, 3) }];
   });
+  const surface = (v: unknown, kind: 'wallpaper' | 'flooring', def: string) =>
+    typeof v === 'string' && getFurniture(v)?.kind === kind && ownsSurface(s, v) ? v : def;
+  s.town.wallpaper = surface(town.wallpaper, 'wallpaper', DEFAULT_WALLPAPER);
+  s.town.flooring = surface(town.flooring, 'flooring', DEFAULT_FLOORING);
   s.town.helpers = (Array.isArray(town.helpers) ? town.helpers : []).flatMap((h) =>
     isObj(h) && typeof h.uid === 'string' && seen.has(h.uid) ? [{ uid: h.uid, startedAt: num(h.startedAt, 0) }] : [],
   );

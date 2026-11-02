@@ -101,7 +101,8 @@ export interface FurnitureDef {
   id: string;
   name: string;
   icon: string;
-  kind: 'furniture' | 'plant' | 'fence' | 'light' | 'toy' | 'season';
+  /** wall=かべに かける / wallpaper・flooring=おへやの かべがみ・ゆか（おくのではなく はりかえる） */
+  kind: 'furniture' | 'plant' | 'light' | 'toy' | 'season' | 'rug' | 'wall' | 'wallpaper' | 'flooring';
   price?: number;
   craft?: Record<string, number>;
   color: string;
@@ -109,6 +110,10 @@ export interface FurnitureDef {
   model: string;
   /** 仲間が座ったり寝たりできる */
   rest?: 'sit' | 'sleep';
+  /** かべがみ・ゆかの もよう */
+  pattern?: 'plain' | 'stripe' | 'dot' | 'check' | 'star' | 'cloud' | 'wood' | 'heart';
+  /** さいしょから もっている（かべがみ・ゆか） */
+  starter?: boolean;
 }
 
 export interface EggDef {
@@ -145,6 +150,8 @@ export interface PlacedFurniture {
   x: number;
   z: number;
   rot: number;
+  /** かべに かけた物。back=おくの かべ（x が よこ位置）/ left=ひだりの かべ（z が よこ位置） */
+  wall?: 'back' | 'left';
 }
 
 export interface GardenPlot {
@@ -196,8 +203,11 @@ export interface SaveData {
     picked: Record<string, number>;
     visits: number;
   };
+  /** おうち（なまえは まえの「まち」の なごり） */
   town: {
     placed: PlacedFurniture[];
+    wallpaper: string;
+    flooring: string;
     furniture: Record<string, number>;
     helpers: Helper[];
     helperFound: number;

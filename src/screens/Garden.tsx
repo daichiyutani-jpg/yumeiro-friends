@@ -54,11 +54,11 @@ export function GardenScreen() {
         })}
       </div>
 
-      <div className="section-title">🔍 まちの おてつだい</div>
+      <div className="section-title">🔍 おそとの おてつだい</div>
       <div className="card">
         {save.town.helpers.length === 0 ? (
           <p className="note" style={{ margin: 0 }}>
-            なかまの ページで「まちで そざいさがしを たのむ」を おすと、{HELPER_INTERVAL / 60000}ふん ごとに そざいを みつけてくれるよ（{HELPER_MAX_FINDS}こ まで たまる）。
+            なかまの ページで「おそとで そざいさがしを たのむ」を おすと、{HELPER_INTERVAL / 60000}ふん ごとに そざいを みつけてくれるよ（{HELPER_MAX_FINDS}こ まで たまる）。
           </p>
         ) : (
           <>
