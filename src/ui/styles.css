@@ -17,6 +17,8 @@
   --shadow: 0 4px 0 rgba(170, 120, 190, 0.25), 0 8px 18px rgba(170, 120, 190, 0.18);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
   font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'BIZ UDPGothic', 'Meiryo', system-ui, sans-serif;
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
@@ -30,7 +32,8 @@ body.big-text { font-size: 18px; }
 button { font: inherit; color: inherit; }
 input { font: inherit; }
 
-.app { position: fixed; inset: 0; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; }
+/* よこ画面。左右の ノッチ（切りかけ）に かからない ように する */
+.app { position: fixed; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); display: flex; flex-direction: column; }
 .canvas-wrap { position: absolute; inset: 0; }
 .canvas-wrap canvas { touch-action: none; }
 .home-canvas { bottom: calc(160px + var(--safe-b)); }
@@ -192,3 +195,92 @@ input { font: inherit; }
 .world-card .ic { font-size: 2.2rem; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; }
 .world-card.locked { opacity: .7; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* ==========================================================
+   よこ画面 レイアウト（高さ 320〜420px・はば 640px〜 を 想定）
+   ========================================================== */
+
+/* たて持ちの 時の 案内（タッチ端末だけ。PC の たて長 ウィンドウでは 出さない） */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate-hint {
+    display: flex; position: fixed; inset: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px;
+    background: linear-gradient(180deg, #ffe9f4, #efe9ff); text-align: center; font-weight: 800; font-size: 1.2rem;
+  }
+  .rotate-hint p { margin: 4px 0; }
+  .rotate-phone { font-size: 4rem; animation: turnPhone 2.2s ease-in-out infinite; }
+}
+@keyframes turnPhone { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+
+/* 画面の枠：上の バーを うすく */
+.topbar { padding: calc(4px + var(--safe-t)) 10px 4px; }
+.topbar .btn.small { min-height: 36px; padding: 4px 12px; font-size: .85rem; }
+.topbar h1 { font-size: 1.02rem; }
+.body { padding: 10px 14px calc(14px + var(--safe-b)); }
+.section-title { margin: 12px 4px 6px; }
+
+/* 左に 3D、右に そうさ の 2れつ画面 */
+.screen-main { flex: 1; display: flex; min-height: 0; }
+.screen-main > .side { width: 40%; max-width: 400px; flex: none; padding: 10px 0 calc(10px + var(--safe-b)) 12px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.screen-main > .side .stage, .screen-main > .side .preview-stage { flex: 1; height: auto; min-height: 0; }
+.screen-main > .body { min-width: 0; }
+
+/* ならびは はばに あわせて 列を ふやす */
+.grid.c2 { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.grid.c3 { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.grid.c4 { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.grid.list { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.modal .grid.c3, .edit-panel .grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* モーダル：ひくい 画面に おさまるよう まんなかに、ボタンは よこ ならび */
+.modal-bg { align-items: center; padding: 6px 12px calc(6px + var(--safe-b)); }
+.modal { max-width: 600px; max-height: 100%; padding: 12px 16px; border-radius: 22px; }
+.modal h2 { margin-bottom: 6px; font-size: 1.1rem; }
+.modal .actions { flex-direction: row-reverse; margin-top: 10px; }
+.modal .actions .btn { flex: 1; min-height: 46px; }
+.modal-stage { height: 130px; position: relative; border-radius: 18px; overflow: hidden; }
+.celebrate { font-size: 2.4rem; }
+.toasts { top: calc(18% + var(--safe-t)); }
+
+/* ホーム：左が まち、右に メニュー */
+.home-canvas { bottom: 0; right: 214px; }
+.home-screen .hud-top { right: 214px; }
+.home-screen .guide { right: 222px; }
+.menu {
+  left: auto; top: 0; width: 214px; padding: calc(8px + var(--safe-t)) 8px calc(8px + var(--safe-b));
+  background: rgba(255, 240, 248, .94); box-shadow: -4px 0 16px rgba(170, 120, 190, .15);
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+}
+.menu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.menu-btn { min-height: 50px; font-size: .62rem; }
+.adventure-btn { min-height: 50px; font-size: .9rem; padding: 6px 8px; white-space: nowrap; }
+
+/* チュートリアルの 案内は 上の まんなかに みじかく */
+.guide { right: auto; max-width: min(560px, calc(100% - 16px)); }
+
+/* 冒険：左半分の ひろい ところが スティック */
+.joy-zone { width: 45%; height: 78%; }
+.action-btn { right: 20px; bottom: calc(18px + var(--safe-b)); width: 86px; height: 86px; }
+
+/* まちづくり：左が まち、右に かぐの パネル */
+.edit-canvas { bottom: 0; right: 250px; }
+.edit-screen .hud-top { right: 250px; }
+.edit-panel {
+  left: auto; top: 0; width: 250px; border-radius: 22px 0 0 22px; overflow-y: auto;
+  padding: calc(10px + var(--safe-t)) 10px calc(10px + var(--safe-b)); box-shadow: -6px 0 20px rgba(170, 120, 190, .2);
+}
+.edit-panel .palette { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+.edit-panel .palette .choice { min-width: 0; }
+.edit-panel .grid.c3 { grid-template-columns: 1fr; }
+
+/* タイトル：ロゴは 左上、ボタンは 右 */
+.logo { top: calc(22px + var(--safe-t)); left: 28px; right: auto; text-align: left; }
+.logo h1 { font-size: 2.2rem; }
+.title-screen { align-items: flex-end; justify-content: center; padding: 16px 28px calc(16px + var(--safe-b)); }
+
+/* ミニゲーム：6れつ×2だん */
+.minigame-field { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.flower-cell { aspect-ratio: 1.35; font-size: 2rem; }
+
+/* ともだちの まちを みる */
+.visit-stage { height: calc(100dvh - 190px); min-height: 170px; }

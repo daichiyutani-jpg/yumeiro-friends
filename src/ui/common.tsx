@@ -21,7 +21,8 @@ export function useSave(): SaveData {
   return save;
 }
 
-export function Screen({ title, back = 'home', children, right, onBack }: { title: string; back?: ScreenId | null; children: ReactNode; right?: ReactNode; onBack?: () => void }) {
+/** ふつうの 画面の 枠。side を わたすと 左に 3D などを 出して、右側が スクロールする 2れつ に なる */
+export function Screen({ title, back = 'home', children, right, onBack, side }: { title: string; back?: ScreenId | null; children: ReactNode; right?: ReactNode; onBack?: () => void; side?: ReactNode }) {
   const go = useGame((s) => s.go);
   const coins = useGame((s) => s.save?.coins ?? 0);
   return (
@@ -37,7 +38,14 @@ export function Screen({ title, back = 'home', children, right, onBack }: { titl
         <h1>{title}</h1>
         {right ?? <span className="coins">🪙 {coins}</span>}
       </div>
-      <div className="body">{children}</div>
+      {side ? (
+        <div className="screen-main">
+          <div className="side">{side}</div>
+          <div className="body">{children}</div>
+        </div>
+      ) : (
+        <div className="body">{children}</div>
+      )}
     </div>
   );
 }

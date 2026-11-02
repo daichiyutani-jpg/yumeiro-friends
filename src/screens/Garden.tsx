@@ -96,7 +96,7 @@ export function GardenScreen() {
               <button className="btn small" style={{ marginTop: 8 }} onClick={() => go('shop', 'seed')}>🛍️ おみせで かう</button>
             </p>
           )}
-          <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="grid list">
             {seeds.map((s) => (
               <button
                 key={s.id}

@@ -59,7 +59,7 @@ export function HomeScreen() {
   const needStarter = save.friends.length === 0;
 
   return (
-    <div className="screen">
+    <div className="screen home-screen">
       <Stage camera={[0, 15, 16]} fov={50} className="canvas-wrap home-canvas">
         <TownScene
           mode="home"
@@ -96,7 +96,7 @@ export function HomeScreen() {
       </div>
       {needStarter && (
         <Modal title="はじめての であい">
-          <div style={{ height: 200, position: 'relative', borderRadius: 20, overflow: 'hidden' }}>
+          <div className="modal-stage">
             <Stage camera={[0, 1.1, 2.9]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />

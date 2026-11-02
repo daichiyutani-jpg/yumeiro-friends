@@ -59,6 +59,12 @@ export function App() {
     <div className="app">
       {content}
       <Toasts />
+      {/* よこ画面の ゲーム。iPhone は 向きを 固定できないので、たて持ちの 時は よこに する よう 案内する */}
+      <div className="rotate-hint" role="alert">
+        <div className="rotate-phone">📱</div>
+        <p>スマホを よこに してね</p>
+        <p className="note">ゆめいろフレンズは よこ画面で あそぶ ゲームです</p>
+      </div>
       {saveError && (
         <div className="save-error" role="alert">
           <span className="grow">⚠️ {saveError}</span>

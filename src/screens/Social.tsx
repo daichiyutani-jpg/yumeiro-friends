@@ -91,7 +91,7 @@ export function SocialScreen() {
               <button key={f.id} className={`choice${visit.id === f.id ? ' on' : ''}`} onClick={() => setVisit(f)}>{f.player.name}</button>
             ))}
           </div>
-          <div className="preview-stage" style={{ height: 340 }}>
+          <div className="preview-stage visit-stage">
             <Stage camera={[0, 10, 15.5]} fov={48}>
               <TownScene
                 mode="visit"

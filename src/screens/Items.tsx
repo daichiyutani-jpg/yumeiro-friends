@@ -39,7 +39,7 @@ export function ItemsScreen() {
           <button key={t.id} className={`btn small${tab === t.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+      <div className="grid list">
         {list.map((x) => (
           <div key={x.key} className="item-tile">
             <span className="ic">{x.icon}</span>

@@ -58,7 +58,7 @@ export function ShopScreen() {
           <button key={t} className={`btn small${tab === t ? ' on' : ''}`} onClick={() => setTab(t)}>{l}</button>
         ))}
       </div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+      <div className="grid list">
         {tab === 'food' && FOODS.map(itemRow)}
         {tab === 'seed' && SEEDS.map(itemRow)}
         {tab === 'tool' && (

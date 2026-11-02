@@ -50,9 +50,12 @@ export function CreateHeroScreen() {
         <h1>あなたを つくろう</h1>
         <span className="back" />
       </div>
-      <div className="body">
+      <div className="screen-main">
+      <div className="side">
         <HeroPreview look={look} equipped={PRESET_OUTFITS[outfit].equipped} />
-        <div className="card" style={{ marginTop: 12 }}>
+      </div>
+      <div className="body">
+        <div className="card" style={{ marginTop: 0 }}>
           <label htmlFor="hero-name" style={{ fontWeight: 800 }}>なまえ（8もじ まで）</label>
           <input id="hero-name" className="text-input" maxLength={8} value={look.name} placeholder="れい：ゆめ" onChange={(e) => set({ name: e.target.value })} autoComplete="off" />
           <p className="note">なまえは この たんまつの なかだけに ほぞんされます。ほんとうの なまえで なくて だいじょうぶ。</p>
@@ -93,6 +96,7 @@ export function CreateHeroScreen() {
             {name ? 'これで はじめる ✨' : 'なまえを いれてね'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

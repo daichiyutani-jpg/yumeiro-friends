@@ -116,7 +116,7 @@ export function EggsScreen() {
       )}
       {born && (
         <Modal title="たまごが かえった！" onClose={() => setBorn(null)} closeLabel="よろしくね！">
-          <div style={{ height: 210, position: 'relative', borderRadius: 20, overflow: 'hidden' }}>
+          <div className="modal-stage">
             <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />

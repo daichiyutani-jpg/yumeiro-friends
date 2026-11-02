@@ -52,7 +52,7 @@ export function SettingsScreen() {
   return (
     <Screen title="せってい">
       <div className="section-title">🎛️ あそびかた</div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+      <div className="grid list">
         <Toggle on={save.settings.sound} label="🔊 こうかおん" onChange={(v) => setSetting('sound', v)} />
         <Toggle on={save.settings.bigText} label="🔠 おおきい もじ" onChange={(v) => setSetting('bigText', v)} />
         <Toggle on={save.settings.reduceMotion} label="🐢 うごきを へらす（まちの なかまが うごかない）" onChange={(v) => setSetting('reduceMotion', v)} />

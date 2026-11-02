@@ -36,7 +36,7 @@ export function TownEditScreen() {
   };
 
   return (
-    <div className="screen">
+    <div className="screen edit-screen">
       <Stage camera={[0, 17, 12]} fov={50} className="canvas-wrap edit-canvas">
         <TownScene
           mode="edit"

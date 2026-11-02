@@ -17,9 +17,8 @@ export function DressupScreen() {
   const canPrincess = canTransform(save);
 
   return (
-    <Screen title="きせかえ">
-      <HeroPreview look={save.player} equipped={save.equipped} princess={save.princess} />
-      <div className="card" style={{ marginTop: 10, background: save.princess ? '#fff3fa' : undefined }}>
+    <Screen title="きせかえ" side={<HeroPreview look={save.player} equipped={save.equipped} princess={save.princess} />}>
+      <div className="card" style={{ background: save.princess ? '#fff3fa' : undefined }}>
         <div className="row">
           <span style={{ fontSize: '1.8rem' }}>👑</span>
           <div className="grow">

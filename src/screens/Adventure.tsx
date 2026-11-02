@@ -267,7 +267,7 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       const sp = getSpecies(e.species);
       return (
         <Modal title={`${sp.name}と であった！`} onClose={close} closeLabel="またね">
-          <div style={{ height: 180, position: 'relative', borderRadius: 20, overflow: 'hidden' }}>
+          <div className="modal-stage">
             <Stage camera={[0, 1.1, 2.9]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />
@@ -298,7 +298,7 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       const sp = getSpecies(dialog.speciesId);
       return (
         <Modal title={`${sp.name}が なかまに なった！`} onClose={close} closeLabel="いっしょに いこう！">
-          <div style={{ height: 180, position: 'relative', borderRadius: 20, overflow: 'hidden' }}>
+          <div className="modal-stage">
             <Stage camera={[0, 1.1, 2.9]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />

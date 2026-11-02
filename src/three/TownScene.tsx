@@ -173,11 +173,11 @@ export function TownScene(props: TownSceneProps) {
   useEffect(() => {
     // ホームの キャンバスは メニューの上だけに あるので、まち全体が入るように 見下ろす
     if (mode === 'edit') {
-      camera.position.set(0, 17, 12);
-      camera.lookAt(0, 0, 2.6);
+      camera.position.set(0, 20, 11);
+      camera.lookAt(0, 0, 0.4);
     } else if (mode === 'home') {
-      camera.position.set(0, 17.5, 17);
-      camera.lookAt(0, 0, -0.9);
+      camera.position.set(0, 17, 11.5);
+      camera.lookAt(0, 0, 0.6);
     } else {
       camera.position.set(0, 15, 14);
       camera.lookAt(0, 0, 0.5);

@@ -80,29 +80,36 @@ export function FriendDetailScreen() {
   const checks = evolutionChecks(save, f);
 
   return (
-    <Screen title={displayName(f)} back="friends">
-      <div className="stage">
-        <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
-          <color attach="background" args={['#fff4fa']} />
-          <hemisphereLight args={['#ffffff', '#e0f0ff', 2.5]} />
-          <directionalLight position={[2, 4, 4]} intensity={1.3} />
-          <Creature look={sp.look} anim={anim} position={[0, 0, 0]} />
-          {(anim !== 'idle' || f.affection >= 80) && <Sparkles count={16} radius={0.8} height={1.5} color="#ffd1e3" />}
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[1.2, 32]} />
-            <meshLambertMaterial color="#ffe6f2" />
-          </mesh>
-        </Stage>
-        {emote && <span className="emote">{emote}</span>}
-      </div>
-      <div className="row" style={{ marginTop: 10 }}>
-        <span className="tag pink">{RARITY_INFO[sp.rarity].stars} {RARITY_INFO[sp.rarity].name}</span>
-        <span className="tag">Lv.{f.level}</span>
-        {friendAbilities(f).map((a) => (
-          <span key={a} className="tag sky">{ABILITY_INFO[a].icon} {ABILITY_INFO[a].name}</span>
-        ))}
-      </div>
-      <div className="card" style={{ marginTop: 10 }}>
+    <Screen
+      title={displayName(f)}
+      back="friends"
+      side={
+        <>
+          <div className="stage">
+            <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
+              <color attach="background" args={['#fff4fa']} />
+              <hemisphereLight args={['#ffffff', '#e0f0ff', 2.5]} />
+              <directionalLight position={[2, 4, 4]} intensity={1.3} />
+              <Creature look={sp.look} anim={anim} position={[0, 0, 0]} />
+              {(anim !== 'idle' || f.affection >= 80) && <Sparkles count={16} radius={0.8} height={1.5} color="#ffd1e3" />}
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[1.2, 32]} />
+                <meshLambertMaterial color="#ffe6f2" />
+              </mesh>
+            </Stage>
+            {emote && <span className="emote">{emote}</span>}
+          </div>
+          <div className="row wrap" style={{ gap: 6 }}>
+            <span className="tag pink">{RARITY_INFO[sp.rarity].stars} {RARITY_INFO[sp.rarity].name}</span>
+            <span className="tag">Lv.{f.level}</span>
+            {friendAbilities(f).map((a) => (
+              <span key={a} className="tag sky">{ABILITY_INFO[a].icon} {ABILITY_INFO[a].name}</span>
+            ))}
+          </div>
+        </>
+      }
+    >
+      <div className="card">
         <div className="row">
           <span style={{ width: 118, flex: 'none' }}>💗 なかよしど</span>
           <div className="bar grow"><i style={{ width: `${(f.affection / MAX_AFFECTION) * 100}%` }} /></div>
@@ -260,7 +267,7 @@ export function FriendDetailScreen() {
       )}
       {evolved && (
         <Modal title="しんか した！" onClose={() => setEvolved(null)} closeLabel="すごい！">
-          <div style={{ height: 200, position: 'relative', borderRadius: 20, overflow: 'hidden' }}>
+          <div className="modal-stage">
             <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />

@@ -24,7 +24,7 @@ export function TitleScreen() {
   }, []);
   return (
     <div className="screen">
-      <Stage camera={[0, 2.6, 8.5]} target={[0, 0.7, 0]} fov={45}>
+      <Stage camera={[2.2, 2.2, 8]} target={[2.2, 0.9, 0]} fov={45}>
         <color attach="background" args={['#ffeaf4']} />
         <hemisphereLight args={['#fff6fb', '#c8eec0', 2.3]} />
         <directionalLight position={[3, 6, 5]} intensity={1.4} />
