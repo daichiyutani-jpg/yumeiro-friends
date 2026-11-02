@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { itemCount } from '../game/logic/core';
 import { itemIcon, itemName } from '../game/data/items';
 import type { CreatureLook, SaveData } from '../game/types';
@@ -21,7 +21,7 @@ export function useSave(): SaveData {
   return save;
 }
 
-/** ふつうの 画面の 枠。side を わたすと 左に 3D などを 出して、右側が スクロールする 2れつ に なる */
+/** ふつうの 画面の 枠。side を わたすと 左に 3D などを 出して 2れつ に なる。中身は スクロールせず 1画面に おさめる */
 export function Screen({ title, back = 'home', children, right, onBack, side }: { title: string; back?: ScreenId | null; children: ReactNode; right?: ReactNode; onBack?: () => void; side?: ReactNode }) {
   const go = useGame((s) => s.go);
   const coins = useGame((s) => s.save?.coins ?? 0);
@@ -50,10 +50,67 @@ export function Screen({ title, back = 'home', children, right, onBack, side }: 
   );
 }
 
-export function Modal({ title, children, onClose, closeLabel = 'とじる' }: { title?: string; children: ReactNode; onClose?: () => void; closeLabel?: string }) {
+/**
+ * スクロールの かわりに ページで みせる 一覧。のこりの たかさに はいる ぶんだけ ならべ、◀ ▶ で めくる。
+ * 1ページの 数は、じっさいに ならべた 列の数 × 入る行の数（いちばん たかい マスで はかる）で きめる。
+ */
+export function Paged({ items, className = 'grid list', resetKey }: { items: ReactNode[]; className?: string; resetKey?: unknown }) {
+  const view = useRef<HTMLDivElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
+  const itemH = useRef(0);
+  const [per, setPer] = useState(items.length || 1);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(0);
+  useEffect(() => setPage(0), [resetKey]);
+  useEffect(() => {
+    const v = view.current;
+    if (!v) return;
+    const ro = new ResizeObserver(() => setSize(v.clientHeight * 10000 + v.clientWidth));
+    ro.observe(v);
+    return () => ro.disconnect();
+  }, []);
+  useLayoutEffect(() => {
+    const v = view.current;
+    const g = grid.current;
+    if (!v || !g || g.children.length === 0) return;
+    const cs = getComputedStyle(g);
+    const cols = Math.max(1, cs.gridTemplateColumns.split(' ').filter(Boolean).length);
+    const gap = parseFloat(cs.rowGap) || 0;
+    for (const c of Array.from(g.children)) itemH.current = Math.max(itemH.current, (c as HTMLElement).offsetHeight);
+    const vs = getComputedStyle(v);
+    const inner = v.clientHeight - (parseFloat(vs.paddingTop) || 0) - (parseFloat(vs.paddingBottom) || 0);
+    const rows = Math.max(1, Math.floor((inner + gap) / (itemH.current + gap)));
+    const next = Math.max(1, cols * rows);
+    if (next !== per) setPer(next);
+  });
+  useEffect(() => {
+    itemH.current = 0;
+  }, [resetKey, size]);
+  const pages = Math.max(1, Math.ceil(items.length / per));
+  const p = Math.min(page, pages - 1);
+  return (
+    <div className="paged">
+      <div className="paged-view" ref={view}>
+        <div className={className} ref={grid}>
+          {items.slice(p * per, p * per + per)}
+        </div>
+      </div>
+      {pages > 1 && (
+        <div className="pager">
+          <button className="btn small" disabled={p === 0} onClick={() => setPage(p - 1)} aria-label="まえの ページ">◀</button>
+          <span>{p + 1} / {pages}</span>
+          <button className="btn small" disabled={p >= pages - 1} onClick={() => setPage(p + 1)} aria-label="つぎの ページ">▶</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** wide: よこに ひろい モーダル（左右 2れつの 中身を いれる 時） */
+export function Modal({ title, children, onClose, closeLabel = 'とじる', wide }: { title?: string; children: ReactNode; onClose?: () => void; closeLabel?: string; wide?: boolean }) {
   return (
     <div className="modal-bg" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className="modal" role="dialog" aria-modal="true">
+      <div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true">
         {title && <h2>{title}</h2>}
         {children}
         {onClose && (

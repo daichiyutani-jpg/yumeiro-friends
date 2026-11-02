@@ -4,7 +4,7 @@ import { ownsSurface } from '../game/logic/life';
 import { ALL_ITEMS } from '../game/data/items';
 import type { ItemCategory } from '../game/types';
 import { useGame } from '../state/store';
-import { Screen, useSave } from '../ui/common';
+import { Paged, Screen, useSave } from '../ui/common';
 
 const TABS: { id: ItemCategory | 'furniture' | 'outfit'; label: string }[] = [
   { id: 'material', label: '✨ そざい' },
@@ -38,14 +38,15 @@ export function ItemsScreen() {
   }
   return (
     <Screen title="もちもの">
-      <div className="pill" style={{ marginBottom: 8 }}>🪙 コイン {save.coins}</div>
       <div className="tabs">
         {TABS.map((t) => (
           <button key={t.id} className={`btn small${tab === t.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
-      <div className="grid list">
-        {list.map((x) => (
+      <Paged
+        className="grid list"
+        resetKey={tab}
+        items={list.map((x) => (
           <div key={x.key} className="item-tile">
             <span className="ic">{x.icon}</span>
             <div className="grow">
@@ -55,7 +56,7 @@ export function ItemsScreen() {
             <b>{typeof x.count === 'number' ? `×${x.count}` : x.count}</b>
           </div>
         ))}
-      </div>
+      />
       {list.length === 0 && (
         <p className="note center">
           まだ なにも ないよ。

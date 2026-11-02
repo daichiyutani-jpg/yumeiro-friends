@@ -11,7 +11,7 @@ import { Creature } from '../three/Creature';
 import { Sparkles } from '../three/Effects';
 import { ForestScene, type Interactable } from '../three/ForestScene';
 import { Stage } from '../three/Stage';
-import { CreatureIcon, Modal, RewardList, useNow, useSave } from '../ui/common';
+import { CreatureIcon, Modal, Paged, RewardList, useNow, useSave } from '../ui/common';
 import { Joystick, useKeyboard } from '../ui/Joystick';
 import { sfx } from '../ui/sound';
 import { TutorialGuide } from './Home';
@@ -30,14 +30,15 @@ export function TeamPicker() {
   const save = useSave();
   const apply = useGame((s) => s.apply);
   return (
-    <div className="grid c3">
-      {save.friends.map((f) => {
+    <Paged
+      className="grid c3"
+      items={save.friends.map((f) => {
         const sp = getSpecies(f.speciesId);
         const inTeam = save.team.includes(f.uid);
         return (
           <button key={f.uid} className={`friend-card${inTeam ? ' team' : ''}`} onClick={() => apply((s) => toggleTeam(s, f.uid), { quiet: false })} aria-pressed={inTeam}>
             {inTeam && <span className="in-team">チーム</span>}
-            <CreatureIcon look={sp.look} size={56} />
+            <CreatureIcon look={sp.look} size={48} />
             <div className="nm">{displayName(f)}</div>
             <div className="lv">
               {friendAbilities(f).map((a) => `${ABILITY_INFO[a].icon}${ABILITY_INFO[a].name}`).join(' ')}
@@ -45,7 +46,7 @@ export function TeamPicker() {
           </button>
         );
       })}
-    </div>
+    />
   );
 }
 
@@ -229,19 +230,20 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
         }
       };
       return (
-        <Modal title={p.name} onClose={close} closeLabel="あとで">
-          <p style={{ lineHeight: 1.7 }}>{p.hint}</p>
-          {ab && (
-            <p className="center">
-              <span className="tag pink" style={{ fontSize: '.95rem' }}>
+        <Modal title={p.name} onClose={close} closeLabel="あとで" wide>
+          <p style={{ lineHeight: 1.6, margin: '0 0 6px' }}>
+            {p.hint}
+            {ab && (
+              <span className="tag pink" style={{ marginLeft: 6 }}>
                 ひつような ちから：{ab.icon} {ab.name}
               </span>
-            </p>
-          )}
-          <div className="actions">
+            )}
+          </p>
+          {/* ボタンが ふえても 1画面に おさまるように 2れつで ならべる */}
+          <div className="actions grid-actions">
             {helpers.map((f) => (
               <button key={f!.uid} className="btn primary block" onClick={() => solve({ kind: 'ability', friendUid: f!.uid })}>
-                <CreatureIcon look={getSpecies(f!.speciesId).look} size={36} /> {displayName(f!)}の {ab?.icon}{ab?.name}の ちからを つかう
+                <CreatureIcon look={getSpecies(f!.speciesId).look} size={30} /> {displayName(f!)}の {ab?.icon}{ab?.name}を つかう
               </button>
             ))}
             {p.alt && (
@@ -250,7 +252,7 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
               </button>
             )}
             {helpers.length === 0 && (
-              <p className="note center">
+              <p className="note center" style={{ gridColumn: '1 / -1', margin: 0 }}>
                 ヒント：チームに {ab?.icon}{ab?.name}の なかまを いれるか、
                 {p.alt && getItem(p.alt.item)?.price !== undefined ? `おみせで ${getItem(p.alt.item)?.name}を かってね。` : `${itemName(p.alt?.item ?? '')}を あつめてね。`}
               </p>
@@ -266,7 +268,8 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       const e = FOREST.encounters.find((x) => x.id === dialog.id)!;
       const sp = getSpecies(e.species);
       return (
-        <Modal title={`${sp.name}と であった！`} onClose={close} closeLabel="またね">
+        <Modal title={`${sp.name}と であった！`} onClose={close} closeLabel="またね" wide>
+          <div className="modal-split" style={{ alignItems: 'center' }}>
           <div className="modal-stage">
             <Stage camera={[0, 1.1, 2.9]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
@@ -275,7 +278,8 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
               <Creature look={sp.look} anim="love" />
             </Stage>
           </div>
-          <p className="center" style={{ lineHeight: 1.7 }}>
+          <div>
+          <p className="center" style={{ lineHeight: 1.7, marginTop: 0 }}>
             {e.text}
             <br />
             {ABILITY_INFO[sp.ability].icon} {ABILITY_INFO[sp.ability].name}の ちからを もっているよ。
@@ -290,6 +294,8 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
             >
               💗 なかまに さそう
             </button>
+          </div>
+          </div>
           </div>
         </Modal>
       );

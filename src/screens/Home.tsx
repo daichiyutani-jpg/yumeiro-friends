@@ -95,7 +95,8 @@ export function HomeScreen() {
         </div>
       </div>
       {needStarter && (
-        <Modal title="はじめての であい">
+        <Modal title="はじめての であい" wide>
+          <div className="modal-split" style={{ alignItems: 'center' }}>
           <div className="modal-stage">
             <Stage camera={[0, 1.1, 2.9]} target={[0, 0.6, 0]} fov={40}>
               <color attach="background" args={['#fff1f8']} />
@@ -105,7 +106,8 @@ export function HomeScreen() {
               <Sparkles count={20} radius={0.9} height={1.6} color="#ffd1e3" />
             </Stage>
           </div>
-          <p className="center" style={{ lineHeight: 1.8 }}>
+          <div>
+          <p className="center" style={{ lineHeight: 1.8, marginTop: 0 }}>
             さくらの はなびらが ふわっと ひかって…<br />
             <b>さくらん</b>が あらわれた！<br />
             「いっしょに あそぼう！」
@@ -114,6 +116,8 @@ export function HomeScreen() {
             <button className="btn primary block" onClick={() => apply((s) => receiveStarter(s), { sound: 'fanfare' })}>
               🌸 なかまに なる
             </button>
+          </div>
+          </div>
           </div>
         </Modal>
       )}

@@ -15,6 +15,14 @@ function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange:
   );
 }
 
+type SettingTab = 'play' | 'save' | 'offline' | 'other';
+const SETTING_TABS: [SettingTab, string][] = [
+  ['play', '🎛️ あそびかた'],
+  ['save', '💾 セーブ'],
+  ['offline', '📶 オフライン・こうしん'],
+  ['other', 'ℹ️ そのほか'],
+];
+
 export function SettingsScreen() {
   const save = useSave();
   const patch = useGame((s) => s.patch);
@@ -29,6 +37,7 @@ export function SettingsScreen() {
   const [reset, setReset] = useState(0);
   const [pendingImport, setPendingImport] = useState<SaveData | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<SettingTab>(pwa.updateWaiting ? 'offline' : 'play');
   useEffect(() => {
     void checkOfflineStatus();
   }, []);
@@ -51,7 +60,12 @@ export function SettingsScreen() {
 
   return (
     <Screen title="せってい">
-      <div className="section-title">🎛️ あそびかた</div>
+      <div className="tabs">
+        {SETTING_TABS.map(([k, l]) => (
+          <button key={k} className={`btn small${tab === k ? ' on' : ''}`} onClick={() => setTab(k)}>{l}</button>
+        ))}
+      </div>
+      {tab === 'play' && (
       <div className="grid list">
         <Toggle on={save.settings.sound} label="🔊 こうかおん" onChange={(v) => setSetting('sound', v)} />
         <Toggle on={save.settings.bigText} label="🔠 おおきい もじ" onChange={(v) => setSetting('bigText', v)} />
@@ -69,9 +83,10 @@ export function SettingsScreen() {
           🧚 チュートリアルを もういちど みる
         </button>
       </div>
+      )}
 
-      <div className="section-title">💾 セーブ</div>
-      <div className="card" style={{ lineHeight: 1.8 }}>
+      {tab === 'save' && (
+      <div className="card" style={{ lineHeight: 1.7 }}>
         <div>この たんまつの なかに じどうで セーブ しているよ（IndexedDB）。</div>
         <div className="muted" style={{ fontSize: '.85rem' }}>
           さいごの セーブ：{lastSavedAt ? new Date(lastSavedAt).toLocaleTimeString('ja-JP') : 'まだ'} ・ データの バージョン {SAVE_VERSION}
@@ -100,9 +115,10 @@ export function SettingsScreen() {
         />
         <p className="note">べつの たんまつへ うつす ときや、おうちの ひとの バックアップ用 です。</p>
       </div>
+      )}
 
-      <div className="section-title">📶 オフライン</div>
-      <div className="card" style={{ lineHeight: 1.8 }}>
+      {tab === 'offline' && (
+      <div className="card" style={{ lineHeight: 1.7 }}>
         <div>
           <span className="online-dot" style={{ background: online ? '#3aa676' : '#c0a0b0' }} />
           いまは {online ? 'オンライン' : 'オフライン'}
@@ -117,15 +133,18 @@ export function SettingsScreen() {
         )}
         <p className="note">ホームがめんに ついか すると、アプリの ように ひらけるよ（iPhone：きょうゆう →「ホーム画面に追加」／ Android：メニュー →「アプリをインストール」）。</p>
       </div>
+      )}
 
-      <div className="section-title">🧹 データの しょきか（テスト用）</div>
-      <button className="btn danger block" onClick={() => setReset(1)}>セーブデータを ぜんぶ けす</button>
-      <p className="note">コイン・なかま・おうち など すべて きえて、さいしょから に なります。</p>
-
-      <div className="section-title">ℹ️ このゲームについて</div>
-      <div className="card note" style={{ margin: 0 }}>
-        ゆめいろフレンズ ためしばん 0.1。かきん・こうこく は ありません。キャラクター・え・おと は すべて この ゲームの ために つくった オリジナル です。
-      </div>
+      {tab === 'other' && (
+        <>
+          <div className="card note" style={{ margin: '0 0 10px' }}>
+            ℹ️ ゆめいろフレンズ ためしばん 0.1。かきん・こうこく は ありません。キャラクター・え・おと は すべて この ゲームの ために つくった オリジナル です。
+          </div>
+          <div className="section-title" style={{ marginTop: 0 }}>🧹 データの しょきか（テスト用）</div>
+          <button className="btn danger block" onClick={() => setReset(1)}>セーブデータを ぜんぶ けす</button>
+          <p className="note">コイン・なかま・おうち など すべて きえて、さいしょから に なります。</p>
+        </>
+      )}
 
       {reset === 1 && (
         <Confirm title="ほんとうに けす？" text="けした データは もとに もどせません。" okLabel="つぎへ" onCancel={() => setReset(0)} onOk={() => setReset(2)} />

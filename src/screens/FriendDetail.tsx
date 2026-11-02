@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FOODS, getItem } from '../game/data/items';
 import { ABILITY_INFO, RARITY_INFO, getSpecies } from '../game/data/species';
 import {
-  AFFECTION_REWARDS, CARE_COOLDOWN, MAX_AFFECTION, MAX_LEVEL, care, careWait, displayName, evolutionChecks, evolve, expToNext,
+  AFFECTION_REWARDS, MAX_AFFECTION, MAX_LEVEL, care, careWait, displayName, evolutionChecks, evolve, expToNext,
   friendAbilities, friendStats, getFriend, revertEvolution, toggleTeam, giveExpCandy, type CareOutcome,
 } from '../game/logic/friends';
 import { toggleHelper } from '../game/logic/life';
@@ -11,7 +11,7 @@ import { useGame } from '../state/store';
 import { Creature, type CreatureAnim } from '../three/Creature';
 import { Sparkles } from '../three/Effects';
 import { Stage } from '../three/Stage';
-import { Confirm, CostList, CreatureIcon, Modal, Screen, useNow, useSave } from '../ui/common';
+import { Confirm, CostList, CreatureIcon, Modal, Paged, Screen, useNow, useSave } from '../ui/common';
 
 const CARE: { kind: CareKind; icon: string; label: string; anim: CreatureAnim; emote: string }[] = [
   { kind: 'feed', icon: '🍓', label: 'ごはん', anim: 'happy', emote: '😋' },
@@ -106,23 +106,22 @@ export function FriendDetailScreen() {
               <span key={a} className="tag sky">{ABILITY_INFO[a].icon} {ABILITY_INFO[a].name}</span>
             ))}
           </div>
+          <div className="card status-card">
+            <div className="row">
+              <span className="lbl">💗 なかよしど</span>
+              <div className="bar grow"><i style={{ width: `${(f.affection / MAX_AFFECTION) * 100}%` }} /></div>
+              <b>{f.affection}</b>
+            </div>
+            <div className="row">
+              <span className="lbl">⭐ けいけんち</span>
+              <div className="bar sky grow"><i style={{ width: f.level >= MAX_LEVEL ? '100%' : `${(f.exp / expToNext(f.level)) * 100}%` }} /></div>
+              <b>{f.level >= MAX_LEVEL ? 'MAX' : `${f.exp}/${expToNext(f.level)}`}</b>
+            </div>
+            {nextReward && <div className="muted">つぎは 💗{nextReward.at} で「{nextReward.text}」</div>}
+          </div>
         </>
       }
     >
-      <div className="card">
-        <div className="row">
-          <span style={{ width: 118, flex: 'none' }}>💗 なかよしど</span>
-          <div className="bar grow"><i style={{ width: `${(f.affection / MAX_AFFECTION) * 100}%` }} /></div>
-          <b>{f.affection}</b>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <span style={{ width: 118, flex: 'none' }}>⭐ けいけんち</span>
-          <div className="bar sky grow"><i style={{ width: f.level >= MAX_LEVEL ? '100%' : `${(f.exp / expToNext(f.level)) * 100}%` }} /></div>
-          <b style={{ fontSize: '.8rem' }}>{f.level >= MAX_LEVEL ? 'MAX' : `${f.exp}/${expToNext(f.level)}`}</b>
-        </div>
-        {nextReward && <p className="note">つぎは なかよしど {nextReward.at} で「{nextReward.text}」</p>}
-      </div>
-
       <div className="tabs">
         {([['care', '🍓 おせわ'], ['grow', '🌟 そだてる・しんか'], ['profile', '📖 プロフィール']] as [Tab, string][]).map(([k, l]) => (
           <button key={k} className={`btn small${tab === k ? ' on' : ''}`} onClick={() => setTab(k)}>{l}</button>
@@ -131,7 +130,7 @@ export function FriendDetailScreen() {
 
       {tab === 'care' && (
         <>
-          <div className="care-grid">
+          <div className={`care-grid${f.affection >= 10 ? ' c4' : ''}`}>
             {CARE.map((c) => {
               const wait = c.kind === 'feed' ? 0 : careWait(f, c.kind, now);
               return (
@@ -142,56 +141,59 @@ export function FriendDetailScreen() {
                 </button>
               );
             })}
+            {/* なかよし 10 から ふえる ボタンも おなじ ならびに いれて 1画面に おさめる */}
+            {f.affection >= 10 && (
+              <>
+                <button className="btn mint" onClick={() => react('happy', '🎶')}><span className="ic">🎶</span>リアクション</button>
+                <button className="btn lav" disabled={f.affection < 30} onClick={() => react('pose', '🌟', 3000)}>
+                  <span className="ic">🌟</span>とくべつポーズ
+                  {f.affection < 30 && <span style={{ fontSize: '.7rem' }}>💗30で</span>}
+                </button>
+              </>
+            )}
           </div>
-          {f.affection >= 10 && (
-            <div className="row" style={{ marginTop: 8 }}>
-              <button className="btn mint grow" onClick={() => react('happy', '🎶')}>🎶 リアクション</button>
-              <button className="btn lav grow" disabled={f.affection < 30} onClick={() => react('pose', '🌟', 3000)}>
-                🌟 とくべつポーズ{f.affection < 30 ? '（💗30で）' : ''}
-              </button>
-            </div>
-          )}
-          <p className="note">すきな たべもの：{getItem(sp.favoriteFood)?.icon} {getItem(sp.favoriteFood)?.name}。おせわを わすれても びょうきに なったり、なかよしどが へったり しないよ。</p>
-          <div className="actions" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-            <button className={`btn block ${inTeam ? '' : 'primary'}`} onClick={() => apply((s) => toggleTeam(s, f.uid))}>
-              {inTeam ? 'チームから はずす' : '🐾 ぼうけんの チームに いれる'}
+          <div className="row" style={{ marginTop: 8 }}>
+            <button className={`btn grow ${inTeam ? '' : 'primary'}`} onClick={() => apply((s) => toggleTeam(s, f.uid))}>
+              {inTeam ? 'チームから はずす' : '🐾 チームに いれる'}
             </button>
-            <button className="btn block" onClick={() => apply((s, n) => toggleHelper(s, f.uid, n))}>
-              {helping ? '🔍 おてつだいを おやすみ する' : '🔍 おそとで そざいさがしを たのむ'}
+            <button className="btn grow" onClick={() => apply((s, n) => toggleHelper(s, f.uid, n))}>
+              {helping ? '🔍 おてつだいを おやすみ' : '🔍 そざいさがしを たのむ'}
             </button>
           </div>
+          <p className="note" style={{ margin: '6px 4px 0', fontSize: '.78rem' }}>
+            すきな たべもの：{getItem(sp.favoriteFood)?.icon} {getItem(sp.favoriteFood)?.name}。おせわを わすれても げんきが へったり しないよ。
+          </p>
         </>
       )}
 
       {tab === 'grow' && (
         <>
-          <div className="card">
-            <div className="row">
-              <span className="grow">💪 ちから {stats.power}</span>
-              <span className="grow">🔎 たんけん {stats.explore}</span>
-            </div>
-            <p className="note">ぼうけん・ミニゲーム・おせわ で けいけんちが たまるよ。</p>
-            <button className="btn lav block" disabled={!save.items.expcandy || f.level >= MAX_LEVEL} onClick={() => apply((s) => giveExpCandy(s, f.uid), { sound: 'sparkle' })}>
-              🍡 げんきキャンディを あげる（もってる {save.items.expcandy ?? 0}）
+          <div className="row" style={{ marginBottom: 6 }}>
+            <span className="tag">💪 ちから {stats.power}</span>
+            <span className="tag">🔎 たんけん {stats.explore}</span>
+            <button className="btn lav small grow" disabled={!save.items.expcandy || f.level >= MAX_LEVEL} onClick={() => apply((s) => giveExpCandy(s, f.uid), { sound: 'sparkle' })}>
+              🍡 げんきキャンディ（{save.items.expcandy ?? 0}）
             </button>
           </div>
-          <div className="section-title">🌈 しんか</div>
-          {checks.length === 0 && <p className="note">この なかまは しんか しないよ。</p>}
-          {checks.map((c) => {
+          {checks.length === 0 && <p className="note">この なかまは しんか しないよ。けいけんちは ぼうけん・ミニゲーム・おせわ で たまるよ。</p>}
+          <Paged
+            className="grid list"
+            items={[
+              ...checks.map((c) => {
             const to = getSpecies(c.to);
             const evo = getSpecies(f.baseId).evolutions.find((e) => e.to === c.to)!;
             return (
-              <div key={c.to} className="card">
+              <div key={c.to} className="card evo-card">
                 <div className="row">
-                  <CreatureIcon look={to.look} size={64} silhouette={!save.dex[c.to]} />
+                  <CreatureIcon look={to.look} size={48} silhouette={!save.dex[c.to]} />
                   <div className="grow">
                     <b>{save.dex[c.to] ? to.name : '？？？'}</b>
                     <div className="note" style={{ margin: 0 }}>{evo.hint}</div>
                   </div>
-                </div>
-                <div className="row wrap" style={{ marginTop: 6 }}>
-                  <span className={`tag ${c.level ? 'ok' : 'warn'}`}>Lv.{evo.level}{c.level ? ' ✔' : ' まだ'}</span>
-                  <span className={`tag ${c.affection ? 'ok' : 'warn'}`}>💗{evo.affection}{c.affection ? ' ✔' : ' まだ'}</span>
+                  <div className="evo-tags">
+                    <span className={`tag ${c.level ? 'ok' : 'warn'}`}>Lv.{evo.level}{c.level ? ' ✔' : ' まだ'}</span>
+                    <span className={`tag ${c.affection ? 'ok' : 'warn'}`}>💗{evo.affection}{c.affection ? ' ✔' : ' まだ'}</span>
+                  </div>
                 </div>
                 <CostList cost={evo.items} save={save} />
                 <button className="btn primary block" disabled={!c.ready} onClick={() => setEvoTo(c.to)}>
@@ -199,18 +201,24 @@ export function FriendDetailScreen() {
                 </button>
               </div>
             );
-          })}
-          {f.speciesId !== f.baseId && (
-            <button className="btn block" onClick={() => setRevert(true)}>
-              ↩ もとの すがた（{getSpecies(f.baseId).name}）に もどす
-            </button>
-          )}
-          <p className="note">しんかは あとから もとに もどしたり、ほかの すがたに えらびなおしたり できるよ（そざいは もどらないよ）。</p>
+              }),
+              ...(f.speciesId !== f.baseId
+                ? [
+                    <div key="revert" className="card evo-card">
+                      <p className="note" style={{ marginTop: 0 }}>しんかは もとに もどしたり、ほかの すがたに えらびなおしたり できるよ（そざいは もどらないよ）。</p>
+                      <button className="btn block" onClick={() => setRevert(true)}>
+                        ↩ もとの すがた（{getSpecies(f.baseId).name}）に もどす
+                      </button>
+                    </div>,
+                  ]
+                : []),
+            ]}
+          />
         </>
       )}
 
       {tab === 'profile' && (
-        <div className="card" style={{ lineHeight: 1.8 }}>
+        <div className="card profile-card">
           <p style={{ marginTop: 0 }}>{sp.description}</p>
           <div>🐾 どうぶつ：{sp.animal} ・ テーマ：{sp.theme}</div>
           <div>😊 せいかく：{sp.personality}</div>
@@ -222,9 +230,10 @@ export function FriendDetailScreen() {
       )}
 
       {feedOpen && (
-        <Modal title="どの ごはんを あげる？" onClose={() => setFeedOpen(false)} closeLabel="やめる">
-          <div className="grid c2">
-            {FOODS.map((food) => {
+        <Modal title="どの ごはんを あげる？" onClose={() => setFeedOpen(false)} closeLabel="やめる" wide>
+          <Paged
+            className="grid c2"
+            items={FOODS.map((food) => {
               const have = save.items[food.id] ?? 0;
               return (
                 <button
@@ -246,7 +255,7 @@ export function FriendDetailScreen() {
                 </button>
               );
             })}
-          </div>
+          />
           <p className="note">ごはんは「おみせ」で かえるよ。つかうと 1こ へるよ。</p>
         </Modal>
       )}
@@ -291,9 +300,6 @@ export function FriendDetailScreen() {
           }}
         />
       )}
-      <p className="note center" style={{ marginTop: 16 }}>
-        おせわの まちじかん：なでる {CARE_COOLDOWN.pet / 1000}びょう ・ あそぶ {CARE_COOLDOWN.play / 1000}びょう
-      </p>
     </Screen>
   );
 }

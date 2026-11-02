@@ -4,7 +4,7 @@ import { ABILITY_INFO, DEX_ORDER, RARITY_INFO, getSpecies } from '../game/data/s
 import { craftFriend } from '../game/logic/friends';
 import { hasItems } from '../game/logic/core';
 import { useGame } from '../state/store';
-import { Confirm, CostList, CreatureIcon, Modal, Screen, useSave } from '../ui/common';
+import { Confirm, CostList, CreatureIcon, Modal, Paged, Screen, useSave } from '../ui/common';
 
 export function DexScreen() {
   const save = useSave();
@@ -17,32 +17,43 @@ export function DexScreen() {
   const state = open ? save.dex[open] : undefined;
   return (
     <Screen title="ずかん">
-      <div className="card row">
-        <span style={{ fontSize: '2rem' }}>📖</span>
-        <div className="grow">
-          <b>なかまに した {owned} / {DEX_ORDER.length}</b>
-          <div className="note" style={{ margin: 0 }}>みたことが ある {seen}（しんかの すがた も ふくむ）</div>
-          <div className="bar" style={{ marginTop: 6 }}><i style={{ width: `${(owned / DEX_ORDER.length) * 100}%` }} /></div>
-        </div>
+      <div className="row" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: '1.5rem' }}>📖</span>
+        <b>なかまに した {owned} / {DEX_ORDER.length}</b>
+        <div className="bar grow"><i style={{ width: `${(owned / DEX_ORDER.length) * 100}%` }} /></div>
+        <span className="note" style={{ margin: 0 }}>みた {seen}</span>
       </div>
-      <div className="grid c4">
-        {DEX_ORDER.map((s, i) => {
+      <Paged
+        className="grid c4"
+        items={DEX_ORDER.map((s, i) => {
           const st = save.dex[s.id];
           return (
             <button key={s.id} className={`dex-card${st ? '' : ' unknown'}`} onClick={() => setOpen(s.id)}>
-              <CreatureIcon look={s.look} size={52} silhouette={!st} />
-              <div>No.{i + 1}</div>
-              <div>{st ? s.name : '？？？'}</div>
-              {st === 'seen' && <span className="tag" style={{ fontSize: '.66rem' }}>みた</span>}
+              <CreatureIcon look={s.look} size={44} silhouette={!st} />
+              <div>No.{i + 1} {st ? s.name : '？？？'}</div>
+              {st === 'seen' && <span className="tag" style={{ fontSize: '.62rem' }}>みた</span>}
             </button>
           );
         })}
-      </div>
+      />
       {sp && (
-        <Modal title={state ? sp.name : '？？？'} onClose={() => setOpen(null)}>
-          <div className="center"><CreatureIcon look={sp.look} size={120} silhouette={!state} /></div>
+        <Modal title={state ? sp.name : '？？？'} onClose={() => setOpen(null)} wide>
+          <div className="modal-split">
+          <div className="center">
+            <CreatureIcon look={sp.look} size={110} silhouette={!state} />
+            {sp.craft && (
+              <div className="card" style={{ margin: '6px 0 0', padding: 8 }}>
+                <b>🔮 そざいで よびかける</b>
+                <CostList cost={sp.craft} save={save} />
+                <button className="btn primary block small" disabled={!hasItems(save, sp.craft)} onClick={() => setCraft(sp.id)}>
+                  よびかける
+                </button>
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: '.86rem' }}>
           {state ? (
-            <div style={{ lineHeight: 1.8 }}>
+            <div style={{ lineHeight: 1.6 }}>
               <div className="row wrap">
                 <span className="tag pink">{RARITY_INFO[sp.rarity].stars} {RARITY_INFO[sp.rarity].name}</span>
                 <span className="tag">{sp.animal} × {sp.theme}</span>
@@ -50,7 +61,7 @@ export function DexScreen() {
                   <span key={a} className="tag sky">{ABILITY_INFO[a!].icon} {ABILITY_INFO[a!].name}</span>
                 ))}
               </div>
-              <p>{sp.description}</p>
+              <p style={{ margin: '4px 0' }}>{sp.description}</p>
               <div>😊 せいかく：{sp.personality}</div>
               <div>🍽️ すきな たべもの：{getItem(sp.favoriteFood)?.icon} {getItem(sp.favoriteFood)?.name}</div>
               <div>✨ スキル：{sp.skills.join('、')}</div>
@@ -60,16 +71,9 @@ export function DexScreen() {
           ) : (
             <p className="center note">まだ であって いないよ。</p>
           )}
-          <p className="note">📍 であいかた：{sp.unlock}</p>
-          {sp.craft && (
-            <div className="card">
-              <b>🔮 そざいで よびかける</b>
-              <CostList cost={sp.craft} save={save} />
-              <button className="btn primary block" disabled={!hasItems(save, sp.craft)} onClick={() => setCraft(sp.id)}>
-                よびかける
-              </button>
-            </div>
-          )}
+          <p className="note" style={{ margin: '4px 0 0' }}>📍 であいかた：{sp.unlock}</p>
+          </div>
+          </div>
         </Modal>
       )}
       {craft && (

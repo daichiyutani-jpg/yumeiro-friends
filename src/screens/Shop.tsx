@@ -6,7 +6,7 @@ import { ownsSurface } from '../game/logic/life';
 import { buyFurniture, buyItem, buyOutfit, craftFurniture, craftOutfit } from '../game/logic/shop';
 import type { FurnitureDef, Result, SaveData } from '../game/types';
 import { useGame } from '../state/store';
-import { Confirm, CostList, Screen, useSave } from '../ui/common';
+import { Confirm, CostList, Paged, Screen, useSave } from '../ui/common';
 
 type Tab = 'food' | 'seed' | 'tool' | 'outfit' | 'furniture' | 'atelier';
 const TABS: [Tab, string][] = [
@@ -23,6 +23,11 @@ interface Pending {
   cost: Record<string, number>;
   run: (s: SaveData) => Result;
 }
+
+const TAB_NOTE: Partial<Record<Tab, string>> = {
+  tool: 'どうぐが あれば、ちからを もつ なかまが いなくても しかけが とけるよ（なくならないよ）。',
+  atelier: 'あつめた そざいで ふくや おうちの かぐ・かべがみを つくれるよ。',
+};
 
 const KIND_NOTE: Partial<Record<FurnitureDef['kind'], string>> = { wall: 'かべに かける', rug: 'ゆかに しく', wallpaper: 'かべがみ', flooring: 'ゆか' };
 
@@ -68,18 +73,15 @@ export function ShopScreen() {
           <button key={t} className={`btn small${tab === t ? ' on' : ''}`} onClick={() => setTab(t)}>{l}</button>
         ))}
       </div>
-      <div className="grid list">
-        {tab === 'food' && FOODS.map(itemRow)}
-        {tab === 'seed' && SEEDS.map(itemRow)}
-        {tab === 'tool' && (
-          <>
-            <p className="note">どうぐが あれば、ちからを もつ なかまが いなくても しかけが とけるよ（なくならないよ）。</p>
-            {TOOLS.map(itemRow)}
-            {SPECIALS.map(itemRow)}
-          </>
-        )}
-        {tab === 'outfit' &&
-          OUTFITS.filter((o) => o.price !== undefined).map((o) => {
+      {TAB_NOTE[tab] && <p className="note" style={{ marginTop: 0 }}>{TAB_NOTE[tab]}</p>}
+      <Paged
+        className="grid list"
+        resetKey={tab}
+        items={[
+          ...(tab === 'food' ? FOODS.map(itemRow) : []),
+          ...(tab === 'seed' ? SEEDS.map(itemRow) : []),
+          ...(tab === 'tool' ? [...TOOLS, ...SPECIALS].map(itemRow) : []),
+          ...(tab === 'outfit' ? OUTFITS.filter((o) => o.price !== undefined).map((o) => {
             const have = save.ownedOutfits.includes(o.id);
             return (
               <div key={o.id} className="item-tile">
@@ -95,9 +97,8 @@ export function ShopScreen() {
                 )}
               </div>
             );
-          })}
-        {tab === 'furniture' &&
-          FURNITURE.filter((f) => f.price !== undefined).map((f) => {
+          }) : []),
+          ...(tab === 'furniture' ? FURNITURE.filter((f) => f.price !== undefined).map((f) => {
             const surface = isSurface(f);
             const have = surface && ownsSurface(save, f.id);
             return (
@@ -114,54 +115,44 @@ export function ShopScreen() {
                 )}
               </div>
             );
-          })}
-        {tab === 'atelier' && (
-          <>
-            <p className="note">あつめた そざいで ふくや おうちの かぐ・かべがみを つくれるよ。</p>
-            {OUTFITS.filter((o) => o.craft).map((o) => {
+          }) : []),
+          ...(tab === 'atelier' ? OUTFITS.filter((o) => o.craft).map((o) => {
               const have = save.ownedOutfits.includes(o.id);
               return (
                 <div key={o.id} className="card" style={{ marginBottom: 0 }}>
                   <div className="row">
                     <span style={{ fontSize: '1.7rem' }}>{o.icon}</span>
                     <b className="grow">{o.name}{o.princess && ' 👑'}</b>
-                    {have && <span className="tag ok">もってる</span>}
-                  </div>
-                  {!have && (
-                    <>
-                      <CostList cost={o.craft!} save={save} />
-                      <button className="btn lav block small" disabled={!hasItems(save, o.craft!)} onClick={() => ask({ title: `${o.name}を つくる？`, cost: o.craft!, run: (s) => craftOutfit(s, o.id) })}>
+                    {have ? <span className="tag ok">もってる</span> : (
+                      <button className="btn lav small" disabled={!hasItems(save, o.craft!)} onClick={() => ask({ title: `${o.name}を つくる？`, cost: o.craft!, run: (s) => craftOutfit(s, o.id) })}>
                         🧵 つくる
                       </button>
-                    </>
-                  )}
+                    )}
+                  </div>
+                  {!have && <CostList cost={o.craft!} save={save} />}
                 </div>
               );
-            })}
-            {FURNITURE.filter((f) => f.craft).map((f) => {
+            }) : []),
+          ...(tab === 'atelier' ? FURNITURE.filter((f) => f.craft).map((f) => {
               const have = isSurface(f) && ownsSurface(save, f.id);
               return (
                 <div key={f.id} className="card" style={{ marginBottom: 0 }}>
                   <div className="row">
                     <span style={{ fontSize: '1.7rem' }}>{f.icon}</span>
                     <b className="grow">{f.name}（{KIND_NOTE[f.kind] ?? 'かぐ'}）</b>
-                    {have && <span className="tag ok">もってる</span>}
-                  </div>
-                  {!have && (
-                    <>
-                      <CostList cost={f.craft!} save={save} />
-                      <button className="btn lav block small" disabled={!hasItems(save, f.craft!)} onClick={() => ask({ title: `${f.name}を つくる？`, cost: f.craft!, run: (s) => craftFurniture(s, f.id) })}>
+                    {have ? <span className="tag ok">もってる</span> : (
+                      <button className="btn lav small" disabled={!hasItems(save, f.craft!)} onClick={() => ask({ title: `${f.name}を つくる？`, cost: f.craft!, run: (s) => craftFurniture(s, f.id) })}>
                         🔨 つくる
                       </button>
-                    </>
-                  )}
+                    )}
+                  </div>
+                  {!have && <CostList cost={f.craft!} save={save} />}
                 </div>
               );
-            })}
-          </>
-        )}
-      </div>
-      <p className="note">ほんものの おかねは つかいません。ゲームの コインと そざい だけで かえるよ。</p>
+            }) : []),
+        ]}
+      />
+      <p className="note" style={{ margin: '4px 4px 0' }}>ほんものの おかねは つかいません。ゲームの コインと そざい だけで かえるよ。</p>
       {pending && (
         <Confirm
           title={pending.title}

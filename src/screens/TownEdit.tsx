@@ -5,7 +5,7 @@ import type { FurnitureDef } from '../game/types';
 import { useGame } from '../state/store';
 import { RoomScene } from '../three/RoomScene';
 import { Stage } from '../three/Stage';
-import { useSave } from '../ui/common';
+import { Paged, useSave } from '../ui/common';
 import { TutorialGuide } from './Home';
 
 type Tab = 'floor' | 'wall' | 'wallpaper' | 'flooring';
@@ -127,8 +127,10 @@ export function TownEditScreen() {
             {tab === 'wallpaper' || tab === 'flooring' ? (
               <>
                 <p className="note" style={{ marginTop: 0 }}>えらぶと すぐ はりかわるよ。なくならないので いつでも もどせるよ</p>
-                <div className="palette">
-                  {surfaces.map((def) => {
+                <Paged
+                  className="palette"
+                  resetKey={tab}
+                  items={surfaces.map((def) => {
                     const have = ownsSurface(save, def.id);
                     return (
                       <button
@@ -143,21 +145,23 @@ export function TownEditScreen() {
                       </button>
                     );
                   })}
-                </div>
+                />
               </>
             ) : (
               <>
                 <p className="note" style={{ marginTop: 0 }}>{hint}</p>
-                <div className="palette">
-                  {stored.map((def) => (
+                {stored.length === 0 && <p className="note">しまってある {tab === 'wall' ? 'かざり' : 'かぐ'}は ないよ</p>}
+                <Paged
+                  className="palette"
+                  resetKey={tab}
+                  items={stored.map((def) => (
                     <button key={def.id} className={`choice${placing === def.id ? ' on' : ''}`} onClick={() => setPlacing(placing === def.id ? null : def.id)}>
                       <span className="ic">{def.icon}</span>
                       {def.name}
                       <span className="muted">×{save.town.furniture[def.id]}</span>
                     </button>
                   ))}
-                  {stored.length === 0 && <p className="note">しまってある {tab === 'wall' ? 'かざり' : 'かぐ'}は ないよ</p>}
-                </div>
+                />
               </>
             )}
             <div className="row" style={{ marginTop: 8, gap: 6 }}>

@@ -9,7 +9,7 @@ import { useGame } from '../state/store';
 import { Creature } from '../three/Creature';
 import { Sparkles } from '../three/Effects';
 import { Stage } from '../three/Stage';
-import { Confirm, Modal, Screen, useNow, useSave } from '../ui/common';
+import { Confirm, Modal, Paged, Screen, useNow, useSave } from '../ui/common';
 
 export function EggsScreen() {
   const save = useSave();
@@ -19,12 +19,14 @@ export function EggsScreen() {
   const [odds, setOdds] = useState<string | null>(null);
   const [born, setBorn] = useState<string | null>(null);
 
-  return (
-    <Screen title="たまご">
-      <div className="section-title">🪺 あたためている たまご（{save.eggs.length} / {MAX_EGG_SLOTS}）</div>
-      {save.eggs.length === 0 && <p className="note">まだ たまごが ないよ。したの「たまごやさん」で かえるよ。</p>}
-      <div className="grid c2">
-        {save.eggs.map((e) => {
+  // 左に あたためている たまご、右に たまごやさん
+  const warming = (
+    <>
+      <div className="section-title" style={{ margin: '0 4px' }}>🪺 あたためている たまご（{save.eggs.length} / {MAX_EGG_SLOTS}）</div>
+      {save.eggs.length === 0 && <p className="note">まだ たまごが ないよ。みぎの「たまごやさん」で かえるよ。ゲームを とじている あいだも あたたまるよ。</p>}
+      <Paged
+        className="grid c2 eggs"
+        items={save.eggs.map((e) => {
           const def = getEgg(e.eggId);
           const ready = now >= e.readyAt;
           const progress = Math.min(1, (now - e.startedAt) / Math.max(1, e.readyAt - e.startedAt));
@@ -52,11 +54,16 @@ export function EggsScreen() {
             </div>
           );
         })}
-      </div>
-      <p className="note">ゲームを とじている あいだも たまごは あたたまるよ。まっている あいだは ぼうけんに いこう！</p>
+      />
+    </>
+  );
 
-      <div className="section-title">🥚 たまごやさん（ゲームの コインだけで かえます）</div>
-      {EGGS.map((egg) => (
+  return (
+    <Screen title="たまご" side={warming}>
+      <div className="section-title" style={{ marginTop: 0 }}>🥚 たまごやさん（ゲームの コインだけで かえます）</div>
+      <Paged
+        className="grid list"
+        items={EGGS.map((egg) => (
         <div key={egg.id} className="card">
           <div className="row">
             <div className="egg-shape" style={{ background: egg.color, width: 54, height: 68, margin: 0 }} />
@@ -75,7 +82,8 @@ export function EggsScreen() {
             </button>
           </div>
         </div>
-      ))}
+        ))}
+      />
       <p className="note">おかねで かう ガチャは ありません。コインは ぼうけん・はなつみ・しゅうかく で もらえるよ。</p>
 
       {buying && (
@@ -93,24 +101,19 @@ export function EggsScreen() {
         />
       )}
       {odds && (
-        <Modal title={`${getEgg(odds)!.name}の かくりつ`} onClose={() => setOdds(null)}>
-          <table className="odds">
-            <thead>
-              <tr><th>なかま</th><th>レア</th><th>かくりつ</th></tr>
-            </thead>
-            <tbody>
-              {eggOdds(getEgg(odds)!).map((o) => {
-                const sp = getSpecies(o.speciesId);
-                return (
-                  <tr key={o.speciesId}>
-                    <td>{save.dex[o.speciesId] ? sp.name : '？？？'}</td>
-                    <td>{RARITY_INFO[sp.rarity as Rarity].stars}</td>
-                    <td>{(o.rate * 100).toFixed(1)}%</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <Modal title={`${getEgg(odds)!.name}の かくりつ`} onClose={() => setOdds(null)} wide>
+          <div className="odds-grid">
+            {eggOdds(getEgg(odds)!).map((o) => {
+              const sp = getSpecies(o.speciesId);
+              return (
+                <div key={o.speciesId}>
+                  <span className="grow">{save.dex[o.speciesId] ? sp.name : '？？？'}</span>
+                  <span>{RARITY_INFO[sp.rarity as Rarity].stars}</span>
+                  <b>{(o.rate * 100).toFixed(1)}%</b>
+                </div>
+              );
+            })}
+          </div>
           <p className="note">まず レアリティを かくりつで きめて、おなじ レアリティの なかから おなじ かくりつで えらびます。</p>
         </Modal>
       )}

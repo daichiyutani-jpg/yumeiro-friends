@@ -289,3 +289,90 @@ input { font: inherit; }
 
 /* ともだちの まちを みる */
 .visit-stage { height: calc(100dvh - 190px); min-height: 170px; }
+
+/* ===== 1画面に おさめる（スクロール なし）=====
+   画面の 中身は スクロールしない。長い 一覧は Paged で ページを めくる。 */
+.body { overflow: hidden; display: flex; flex-direction: column; min-height: 0; padding-bottom: calc(8px + var(--safe-b)); }
+.body > * { flex: none; }
+.body > .paged, .body > .fill { flex: 1; min-height: 0; }
+.paged { display: flex; flex-direction: column; min-height: 0; }
+.paged-view { flex: 1; min-height: 0; overflow: hidden; padding: 2px; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 6px; font-weight: 800; }
+.pager .btn { min-width: 64px; min-height: 34px; }
+.tabs { overflow: visible; padding: 2px 2px 6px; }
+.tabs .btn { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 4px 6px; font-size: .78rem; white-space: nowrap; }
+.edit-panel { overflow: hidden; display: flex; flex-direction: column; }
+.edit-panel > .paged { flex: 1; }
+.modal { overflow: hidden; }
+.screen-main > .side > * { flex: none; }
+.screen-main > .side > .paged { flex: 1; min-height: 0; }
+.grid > .world-card { margin: 0; min-height: 64px; padding: 10px 12px; }
+.grid > .card { margin: 0; }
+.modal { display: flex; flex-direction: column; }
+.modal > * { flex: none; }
+.modal > .paged { flex: 1 1 auto; min-height: 0; }
+.modal.wide { max-width: 780px; }
+.modal-split { display: grid; grid-template-columns: minmax(170px, 34%) 1fr; gap: 14px; align-items: start; }
+.odds-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 10px; font-size: .84rem; }
+.odds-grid > div { display: flex; gap: 6px; align-items: center; background: #fff; border-radius: 10px; padding: 4px 8px; }
+.eggs .egg-card { padding: 8px; }
+.eggs .egg-shape { width: 44px; height: 56px; }
+.mock-banner { padding: 6px 10px; margin-bottom: 4px; font-size: .84rem; border-width: 2px; }
+.visit-stage.fill { height: auto; min-height: 0; flex: 1; }
+.trade-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 8px; }
+.trade-steps .card { margin: 0; padding: 10px; }
+.trade-steps .choice { min-height: 40px; padding: 4px 10px; font-size: .84rem; }
+.qr { width: 150px; height: 150px; flex: none; margin: 0; }
+.slot-tabs { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.slot-tabs .btn { font-size: .62rem; padding: 4px 0; }
+.princess-card { margin: 0; padding: 8px 10px; }
+.princess-card .row { margin-bottom: 6px; }
+.modal .preview-stage { height: 190px; }
+.look-edit .choice { min-height: 40px; padding: 4px 12px; }
+.look-edit .section-title { margin: 8px 4px 4px; font-size: .9rem; }
+.look-edit .swatch { width: 38px; height: 38px; }
+.status-card { margin: 0; padding: 8px 10px; font-size: .78rem; }
+.status-card .row { gap: 6px; margin-bottom: 4px; }
+.status-card .lbl { width: 84px; flex: none; }
+.evo-card { padding: 10px; }
+.evo-card .btn { min-height: 40px; }
+.profile-card { line-height: 1.55; font-size: .84rem; margin: 0; }
+.edit-panel > * { flex: none; }
+.edit-panel > .paged { flex: 1; min-height: 0; }
+.edit-panel .palette { padding: 0; }
+/* なかまの おせわ: 1画面に おさまる たかさ */
+.care-grid .btn { min-height: 60px; font-size: .8rem; }
+.care-grid .btn .ic { font-size: 1.4rem; }
+.plot-card { min-height: 108px; padding: 8px; gap: 4px; }
+.plot-card .ic { font-size: 1.8rem; }
+.care-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.evo-tags { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex: none; }
+.profile-card { font-size: .76rem; line-height: 1.45; padding: 10px 12px; }
+.profile-card p { margin-bottom: 4px; }
+.profile-card .note { margin: 4px 0 0; font-size: .74rem; }
+.trade-steps.fill { grid-template-rows: minmax(0, 1fr); }
+.trade-steps > .card { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.trade-steps > .card > * { flex: none; }
+.trade-steps > .card > .paged { flex: 1; min-height: 0; margin-top: 6px; }
+.trade-choices { grid-template-columns: 1fr; gap: 6px; }
+.trade-steps .pager { padding-top: 4px; gap: 8px; }
+.trade-steps .pager .btn { min-width: 40px; min-height: 30px; }
+/* せまい よこがめん（iPhone SE など 667px）: ひだりの れつを ほそくして 1画面に おさめる */
+@media (max-width: 720px) {
+  .screen-main > .side { width: 33%; padding-left: 8px; }
+  .mock-banner { font-size: .72rem; line-height: 1.35; }
+  .plot-card { min-height: 0; padding: 6px; }
+  .plot-card .ic { font-size: 1.5rem; }
+  .plot-card .muted { font-size: .66rem !important; }
+  .look-edit .swatch { width: 32px; height: 32px; }
+  .care-grid .btn { min-height: 54px; font-size: .72rem; }
+  .care-grid .btn .ic { font-size: 1.2rem; }
+  .trade-steps .choice { min-height: 34px; font-size: .76rem; }
+}
+.grid.plots { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 720px) {
+  .care-grid .btn { min-height: 50px; }
+  .care-grid + .row .btn { min-height: 44px; font-size: .78rem; }
+}
+.modal .actions.grid-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
+.modal .actions.grid-actions .btn { min-height: 44px; font-size: .86rem; }

@@ -5,10 +5,53 @@ import { displayName, getFriend } from '../game/logic/friends';
 import { HELPER_INTERVAL, HELPER_MAX_FINDS, collectHelpers, harvest, helperFinds, plant, plotProgress, plotStatus } from '../game/logic/life';
 import { formatRemain } from '../game/logic/time';
 import { useGame } from '../state/store';
-import { CreatureIcon, Modal, RewardList, Screen, useNow, useSave } from '../ui/common';
+import { CreatureIcon, Modal, Paged, RewardList, Screen, useNow, useSave } from '../ui/common';
 
 const STATUS_TEXT = { empty: 'からっぽ', seed: 'たねを うえたよ', growing: 'そだっているよ', ready: 'さいたよ！' };
 const STATUS_ICON = { empty: '🟫', seed: '🌱', growing: '🌿', ready: '🌸' };
+
+/** おそとで そざいを さがしてくれている なかま（画面の 左がわ） */
+function Helpers({ onGot }: { onGot: (r: Record<string, number>) => void }) {
+  const save = useSave();
+  const apply = useGame((s) => s.apply);
+  const now = useNow();
+  return (
+    <>
+      <div className="section-title" style={{ margin: '0 4px' }}>🔍 おそとの おてつだい</div>
+      <div className="card" style={{ margin: 0 }}>
+        {save.town.helpers.length === 0 ? (
+          <p className="note" style={{ margin: 0 }}>
+            なかまの ページで「おそとで そざいさがしを たのむ」を おすと、{HELPER_INTERVAL / 60000}ふん ごとに そざいを みつけてくれるよ（{HELPER_MAX_FINDS}こ まで たまる）。
+          </p>
+        ) : (
+          <>
+            {save.town.helpers.map((h) => {
+              const f = getFriend(save, h.uid);
+              if (!f) return null;
+              const n = helperFinds(h.startedAt, now);
+              return (
+                <div key={h.uid} className="row" style={{ marginBottom: 4 }}>
+                  <CreatureIcon look={getSpecies(f.speciesId).look} size={34} />
+                  <span className="grow">{displayName(f)}</span>
+                  <span className="tag">{n >= HELPER_MAX_FINDS ? 'いっぱい！' : `みつけた ${n}こ`}</span>
+                </div>
+              );
+            })}
+            <button
+              className="btn primary block"
+              onClick={() => {
+                const r = apply((s, n) => collectHelpers(s, n, Math.random), { quiet: false, sound: 'chest' });
+                if (r?.ok) onGot(r.data as Record<string, number>);
+              }}
+            >
+              🎁 うけとる
+            </button>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
 
 export function GardenScreen() {
   const save = useSave();
@@ -21,9 +64,9 @@ export function GardenScreen() {
   const seeds = SEEDS.filter((s) => (save.items[s.id] ?? 0) > 0);
 
   return (
-    <Screen title="おはなばたけ">
-      <p className="note">たねを うえると、じかんが たつと はなが さくよ。ゲームを とじていても そだつよ。</p>
-      <div className="grid c3">
+    <Screen title="おはなばたけ" side={<Helpers onGot={setGot} />}>
+      <p className="note" style={{ marginTop: 0 }}>たねを うえると、じかんが たつと はなが さくよ。ゲームを とじていても そだつよ。</p>
+      <div className="grid c3 plots">
         {save.garden.map((p, i) => {
           const st = plotStatus(save, i, now);
           const seed = p.seedId ? getSeed(p.seedId) : undefined;
@@ -54,41 +97,8 @@ export function GardenScreen() {
         })}
       </div>
 
-      <div className="section-title">🔍 おそとの おてつだい</div>
-      <div className="card">
-        {save.town.helpers.length === 0 ? (
-          <p className="note" style={{ margin: 0 }}>
-            なかまの ページで「おそとで そざいさがしを たのむ」を おすと、{HELPER_INTERVAL / 60000}ふん ごとに そざいを みつけてくれるよ（{HELPER_MAX_FINDS}こ まで たまる）。
-          </p>
-        ) : (
-          <>
-            {save.town.helpers.map((h) => {
-              const f = getFriend(save, h.uid);
-              if (!f) return null;
-              const n = helperFinds(h.startedAt, now);
-              return (
-                <div key={h.uid} className="row" style={{ marginBottom: 6 }}>
-                  <CreatureIcon look={getSpecies(f.speciesId).look} size={40} />
-                  <span className="grow">{displayName(f)}</span>
-                  <span className="tag">{n >= HELPER_MAX_FINDS ? 'いっぱい！' : `みつけた ${n}こ`}</span>
-                </div>
-              );
-            })}
-            <button
-              className="btn primary block"
-              onClick={() => {
-                const r = apply((s, n) => collectHelpers(s, n, Math.random), { quiet: false, sound: 'chest' });
-                if (r?.ok) setGot(r.data as Record<string, number>);
-              }}
-            >
-              🎁 うけとる
-            </button>
-          </>
-        )}
-      </div>
-
       {choose !== null && (
-        <Modal title="どの たねを うえる？" onClose={() => setChoose(null)} closeLabel="やめる">
+        <Modal title="どの たねを うえる？" onClose={() => setChoose(null)} closeLabel="やめる" wide>
           {seeds.length === 0 && (
             <p className="center note">
               たねを もっていないよ。
@@ -96,8 +106,9 @@ export function GardenScreen() {
               <button className="btn small" style={{ marginTop: 8 }} onClick={() => go('shop', 'seed')}>🛍️ おみせで かう</button>
             </p>
           )}
-          <div className="grid list">
-            {seeds.map((s) => (
+          <Paged
+            className="grid list"
+            items={seeds.map((s) => (
               <button
                 key={s.id}
                 className="item-tile"
@@ -118,7 +129,7 @@ export function GardenScreen() {
                 </div>
               </button>
             ))}
-          </div>
+          />
         </Modal>
       )}
       {got && (

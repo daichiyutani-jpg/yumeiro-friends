@@ -3,15 +3,14 @@ import { MATERIALS, itemIcon, itemName } from '../game/data/items';
 import { SAMPLE_FRIENDS, type SampleFriend } from '../game/data/sampleFriends';
 import { Stage } from '../three/Stage';
 import { RoomScene } from '../three/RoomScene';
-import { Modal, Screen, useOnline, useSave } from '../ui/common';
+import { Modal, Paged, Screen, useOnline, useSave } from '../ui/common';
 
 type Tab = 'list' | 'visit' | 'trade' | 'qr';
 
 function MockBanner() {
   return (
     <div className="mock-banner" role="note">
-      🧪 ここは「おためし」の ばしょです。<br />
-      まだ インターネットで ほんとうの ともだちと つながる きのうは ありません。みほんの ともだちで あそべます。
+      🧪 ここは「おためし」の ばしょです。まだ ほんとうの ともだちとは つながりません。みほんの ともだちで あそべます。
     </div>
   );
 }
@@ -58,9 +57,9 @@ export function SocialScreen() {
   return (
     <Screen title="ともだち（おためし）">
       <MockBanner />
-      <p className="status-line" style={{ textAlign: 'left' }}>
+      <p className="status-line" style={{ textAlign: 'left', margin: '4px 4px' }}>
         <span className="online-dot" style={{ background: online ? '#3aa676' : '#c0a0b0' }} />
-        いまは {online ? 'オンライン' : 'オフライン'}。ほんものの ともだち きのうは じゅんびちゅう なので、どちらでも おなじ です。
+        いまは {online ? 'オンライン' : 'オフライン'}（どちらでも おなじ です）
       </p>
       <div className="tabs">
         {([['list', '👭 ともだち'], ['visit', '🏠 おうちを みる'], ['trade', '🎁 おためしこうかん'], ['qr', '📷 QRとうろく']] as [Tab, string][]).map(([k, l]) => (
@@ -70,6 +69,7 @@ export function SocialScreen() {
 
       {tab === 'list' && (
         <>
+          <div className="grid c2">
           {SAMPLE_FRIENDS.map((f) => (
             <div key={f.id} className="card row">
               <span style={{ fontSize: '2rem' }}>🧒</span>
@@ -80,18 +80,20 @@ export function SocialScreen() {
               <button className="btn small primary" onClick={() => { setVisit(f); setTab('visit'); }}>みにいく</button>
             </div>
           ))}
+          </div>
           <p className="note">あんしんの ために：じゆうに もじを おくる チャット・いばしょの きょうゆう・ほんみょう や がっこうの なまえ の にゅうりょく は ありません。</p>
         </>
       )}
 
       {tab === 'visit' && (
         <>
-          <div className="row wrap" style={{ marginBottom: 8 }}>
+          <div className="row" style={{ marginBottom: 6 }}>
             {SAMPLE_FRIENDS.map((f) => (
-              <button key={f.id} className={`choice${visit.id === f.id ? ' on' : ''}`} onClick={() => setVisit(f)}>{f.player.name}</button>
+              <button key={f.id} className={`choice${visit.id === f.id ? ' on' : ''}`} style={{ minHeight: 38, padding: '4px 12px' }} onClick={() => setVisit(f)}>{f.player.name}</button>
             ))}
+            <span className="note grow" style={{ margin: 0 }}>みるだけ の ばしょ です。ともだちの おうちを かえることは できません。</span>
           </div>
-          <div className="preview-stage visit-stage">
+          <div className="preview-stage visit-stage fill">
             <Stage camera={[8, 9, 11]} fov={48}>
               <RoomScene
                 mode="visit"
@@ -105,12 +107,12 @@ export function SocialScreen() {
               />
             </Stage>
           </div>
-          <p className="note">みるだけ の ばしょ です。ともだちの おうちを かえることは できません。</p>
         </>
       )}
 
       {tab === 'trade' && (
         <>
+          <div className="grid trade-steps fill">
           <div className="card">
             <b>① こうかんする あいて</b>
             <div className="row wrap" style={{ marginTop: 6 }}>
@@ -121,12 +123,14 @@ export function SocialScreen() {
           </div>
           <div className="card">
             <b>② あなたが わたす もの（1こ）</b>
-            <div className="row wrap" style={{ marginTop: 6 }}>
-              {myMaterials.map((m) => (
+            {myMaterials.length === 0 && <span className="note">わたせる そざいが ないよ</span>}
+            {/* そざいが おおい ときは ページで めくる */}
+            <Paged
+              className="grid trade-choices"
+              items={myMaterials.map((m) => (
                 <button key={m.id} className={`choice${give === m.id ? ' on' : ''}`} onClick={() => setGive(m.id)}>{m.icon} {m.name}</button>
               ))}
-              {myMaterials.length === 0 && <span className="note">わたせる そざいが ないよ</span>}
-            </div>
+            />
           </div>
           <div className="card">
             <b>③ もらいたい もの（1こ）</b>
@@ -136,6 +140,7 @@ export function SocialScreen() {
               ))}
             </div>
           </div>
+          </div>
           <button className="btn primary block" disabled={!give || !get} onClick={() => setConfirm(true)}>
             おためしで こうかんして みる
           </button>
@@ -143,12 +148,14 @@ export function SocialScreen() {
       )}
 
       {tab === 'qr' && (
-        <div className="card center">
-          <b>あなたの ともだちコード（みほん）</b>
+        <div className="card row" style={{ alignItems: 'center', gap: 16 }}>
           <FakeQr seed={save.player.name + save.createdAt} />
-          <p className="note">これは みほんの もようです。ほんものの QRコードでの とうろくは まだ できません。</p>
-          <button className="btn block" disabled>📷 カメラで よみとる（じゅんびちゅう）</button>
-          <p className="note">ともだちとうろく には、こんご インターネットと おうちの ひとの かくにんが ひつように なる よていです。</p>
+          <div className="grow">
+            <b>あなたの ともだちコード（みほん）</b>
+            <p className="note">これは みほんの もようです。ほんものの QRコードでの とうろくは まだ できません。</p>
+            <button className="btn block" disabled>📷 カメラで よみとる（じゅんびちゅう）</button>
+            <p className="note">ともだちとうろく には、こんご インターネットと おうちの ひとの かくにんが ひつように なる よていです。</p>
+          </div>
         </div>
       )}
 
