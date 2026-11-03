@@ -2,7 +2,7 @@ import { DEFAULT_FLOORING, DEFAULT_WALLPAPER, STARTER_OUTFITS } from '../data/ca
 import { getItem } from '../data/items';
 import type { PlayerLook, Result, SaveData } from '../types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const MAX_TEAM = 3;
 export const MAX_STACK = 999;
 export const MAX_COINS = 999_999;
@@ -24,6 +24,14 @@ export function newUid(s: SaveData, prefix: string): string {
   const id = `${prefix}${s.nextUid}`;
   s.nextUid += 1;
   return id;
+}
+
+/** ともだちコード（まちがえやすい 0/O・1/I を つかわない 8もじ） */
+export const PAL_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export function newPalCode(): string {
+  const buf = new Uint8Array(8);
+  globalThis.crypto.getRandomValues(buf);
+  return Array.from(buf, (b) => PAL_CODE_CHARS[b % PAL_CODE_CHARS.length]).join('');
 }
 
 export function createNewSave(look: PlayerLook, realNow: number): SaveData {
@@ -50,6 +58,8 @@ export function createNewSave(look: PlayerLook, realNow: number): SaveData {
     stats: { chests: 0, minigames: 0, bestScore: 0, harvests: 0, hatched: 0, evolutions: 0 },
     achievements: [],
     nextUid: 1,
+    palCode: newPalCode(),
+    pals: [],
   };
 }
 

@@ -5,6 +5,7 @@ import { hasSpecies } from '../data/species';
 import type { SaveData } from '../types';
 import { GARDEN_PLOTS, MAX_COINS, MAX_STACK, MAX_TEAM, SAVE_VERSION, createNewSave } from './core';
 import { clampToRoom, ownsSurface, wallPos } from './life';
+import { isPalCode, sanitizePals } from './pals';
 
 type Raw = Record<string, unknown>;
 
@@ -16,6 +17,7 @@ const count = (v: unknown, max: number): number => Math.max(0, Math.min(max, Mat
  * バージョンごとの移行。新しい項目を足したら、ここに1段ふやす。
  * v1 → v2: おてつだい（town.helpers / helperFound）と 大きい文字設定（settings.bigText）を追加。
  * v2 → v3: まちづくり → おうちづくり。かべがみ・ゆかを足し、おそとの ひろさ(±6)で おいた かぐを おへや(±4.5)に ちぢめる。
+ * v3 → v4: QRコードの ともだちとうろく（pals）。じぶんの ともだちコード（palCode）は sanitize で つくる。
  */
 const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   1: (d) => {
@@ -30,6 +32,7 @@ const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
     );
     return { ...d, version: 3, town: { wallpaper: DEFAULT_WALLPAPER, flooring: DEFAULT_FLOORING, ...town, placed } };
   },
+  3: (d) => ({ ...d, version: 4, pals: [] }),
 };
 
 export class SaveFormatError extends Error {}
@@ -173,5 +176,7 @@ export function sanitize(d: Raw): SaveData {
     .filter(Number.isFinite)
     .reduce((a, b) => Math.max(a, b), 0);
   s.nextUid = Math.max(count(d.nextUid, 1e9), maxUid + 1, 1);
+  if (isPalCode(d.palCode)) s.palCode = d.palCode;
+  s.pals = sanitizePals(d.pals, s.palCode);
   return s;
 }

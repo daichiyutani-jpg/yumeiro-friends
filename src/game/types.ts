@@ -182,6 +182,19 @@ export interface PlayerLook {
   skinColor: string;
 }
 
+/** QRコードで とうろくした ともだち（とうろくした ときの すがた・おうちの うつし。つうしんは しない） */
+export interface PalCard {
+  code: string;
+  player: PlayerLook;
+  equipped: Record<OutfitSlot, string | null>;
+  friends: { uid: string; speciesId: string }[];
+  placed: PlacedFurniture[];
+  wallpaper: string;
+  flooring: string;
+  addedAt: number;
+  updatedAt: number;
+}
+
 export interface SaveData {
   version: number;
   createdAt: number;
@@ -220,6 +233,9 @@ export interface SaveData {
   stats: { chests: number; minigames: number; bestScore: number; harvests: number; hatched: number; evolutions: number };
   achievements: string[];
   nextUid: number;
+  /** じぶんの ともだちコード（QRに いれる。ランダムで、なまえ などとは むすびつかない） */
+  palCode: string;
+  pals: PalCard[];
 }
 
 /** 操作の結果。失敗した時は state は変わらない */

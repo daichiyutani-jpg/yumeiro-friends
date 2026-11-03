@@ -436,3 +436,37 @@ input { font: inherit; }
   .card.center .btn.block { min-height: 48px; }
   .body > .note { font-size: .74rem; line-height: 1.45; margin: 2px 4px; }
 }
+
+/* ---------- QRコードの ともだちとうろく ---------- */
+.safe-banner { background: #eef8ff; border: 2px solid #bfe3ff; border-radius: 14px; padding: 4px 10px; margin-bottom: 4px; font-size: .74rem; font-weight: 800; line-height: 1.4; }
+.visit-layout { display: grid; grid-template-columns: 150px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 10px; min-height: 0; }
+.visit-layout > .paged { min-height: 0; }
+.visit-layout .visit-stage { height: auto; min-height: 0; }
+.visit-caption { position: absolute; left: 10px; bottom: 8px; font-size: .72rem; font-weight: 800; background: #ffffffd0; padding: 2px 10px; border-radius: 10px; pointer-events: none; }
+.qr-card { align-items: stretch; gap: 16px; min-height: 0; }
+.qr-card .note { font-size: .76rem; margin: 4px 2px; }
+.qr-show { flex: none; height: 100%; max-height: 230px; aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer; align-self: center; }
+.qr-real { display: block; height: 100%; width: 100%; image-rendering: pixelated; border-radius: 12px; box-shadow: var(--shadow); background: #fff; }
+.qr-full { position: fixed; inset: 0; z-index: 300; background: #fff; display: flex; align-items: center; justify-content: center; gap: 24px; padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); }
+.qr-full .qr-real { height: calc(100dvh - 24px); width: auto; aspect-ratio: 1; max-width: 70vw; box-shadow: none; border-radius: 0; }
+.qr-full-side { display: flex; flex-direction: column; gap: 8px; width: 170px; text-align: center; }
+.qr-scan { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.qr-scan-view { position: relative; height: 180px; background: #2b1f33; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.qr-scan-view video { width: 100%; height: 100%; object-fit: cover; }
+.qr-scan-view .note { color: #fff; padding: 0 12px; }
+.qr-scan-frame { position: absolute; top: 50%; left: 50%; height: 80%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 3px dashed #fff; border-radius: 16px; pointer-events: none; }
+.qr-photo { position: relative; overflow: hidden; }
+.qr-photo input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+@media (max-width: 720px), (max-height: 420px) {
+  .safe-banner { font-size: .66rem; padding: 3px 10px; }
+  .visit-layout { grid-template-columns: 130px minmax(0, 1fr); }
+}
+.pal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pal-list > .card { flex-wrap: nowrap; padding: 8px 12px; gap: 8px; align-items: center; }
+.pal-list .grow { min-width: 0; }
+.pal-list b, .pal-list .note { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pal-list .note { font-size: .74rem; }
+.pal-list .card.row > span:first-child { font-size: 1.6rem !important; }
+.visit-layout .choice { font-size: .8rem; }
+.gate-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gate-choices .btn { min-height: 44px; font-size: 1.05rem; }
