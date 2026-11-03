@@ -376,3 +376,14 @@ input { font: inherit; }
 }
 .modal .actions.grid-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
 .modal .actions.grid-actions .btn { min-height: 44px; font-size: .86rem; }
+/* ---------- タップの 反応 ---------- */
+/* おしらせは 画面の うえに だし、タップを とおす（したの ボタンを ふさがない） */
+.toasts { top: calc(6px + var(--safe-t)); }
+.toast { pointer-events: none; padding: 6px 14px; font-size: .86rem; }
+/* おした しゅんかんに わかる 見た目。ボタンの 位置は うごかさない（はしを おした時に はずれないように） */
+.btn:active, .choice:active, .dex-card:active, .world-card:active, .tm:active { transform: scale(.96); filter: brightness(.93); }
+.btn, .choice, .dex-card, .world-card { transition: transform .06s, filter .06s; }
+.btn:disabled:active, .choice:disabled:active { transform: none; filter: none; }
+/* ページ送りの ボタンは おしやすい おおきさに */
+.pager .btn { min-width: 72px; min-height: 40px; }
+.trade-steps .pager .btn { min-width: 48px; min-height: 34px; }

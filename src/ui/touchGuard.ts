@@ -20,6 +20,8 @@ export function installTouchGuard(): void {
     },
     { passive: false },
   );
+  // iPhone の Safari は touchstart を きいていないと :active（おした 見た目）が でず、ボタンが 反応していないように 見える
+  document.addEventListener('touchstart', () => {}, { passive: true });
   // iOS Safari の ピンチ拡大
   for (const type of ['gesturestart', 'gesturechange']) {
     document.addEventListener(type, (e) => e.preventDefault(), { passive: false });

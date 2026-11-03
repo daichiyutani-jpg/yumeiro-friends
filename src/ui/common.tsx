@@ -262,11 +262,10 @@ export function CreatureIcon({ look, size = 64, silhouette = false }: { look: Cr
 
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
-  const dismiss = useGame((s) => s.dismissToast);
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.kind}`} onClick={() => dismiss(t.id)}>
+        <div key={t.id} className={`toast ${t.kind}`}>
           {t.text}
         </div>
       ))}
