@@ -185,7 +185,7 @@ export function FriendDetailScreen() {
             return (
               <div key={c.to} className="card evo-card">
                 <div className="row">
-                  <CreatureIcon look={to.look} size={48} silhouette={!save.dex[c.to]} />
+                  <CreatureIcon look={to.look} size={40} silhouette={!save.dex[c.to]} />
                   <div className="grow">
                     <b>{save.dex[c.to] ? to.name : '？？？'}</b>
                     <div className="note" style={{ margin: 0 }}>{evo.hint}</div>
