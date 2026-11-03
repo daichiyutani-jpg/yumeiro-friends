@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSpecies } from '../game/data/species';
-import { usePwa } from '../pwa';
+import { applyUpdate, usePwa } from '../pwa';
 import { useGame } from '../state/store';
 import { Creature } from '../three/Creature';
 import { Petals, Sparkles } from '../three/Effects';
@@ -22,6 +22,20 @@ export function TitleScreen() {
   useEffect(() => {
     document.title = 'ゆめいろフレンズ';
   }, []);
+  // あたらしい バージョンが あれば、スタートの まえに かならず こうしんする（よみこみ なおすと さいしょの がめんに もどる）
+  useEffect(() => {
+    if (pwa.updateWaiting && pwa.phase !== 'applying') applyUpdate();
+  }, [pwa.updateWaiting, pwa.phase]);
+  useEffect(() => {
+    if (pwa.phase !== 'applying') return;
+    const t = setTimeout(() => location.reload(), 8000);
+    return () => clearTimeout(t);
+  }, [pwa.phase]);
+  const updating = pwa.updateWaiting || pwa.phase !== 'idle';
+  const updateText =
+    pwa.phase === 'checking' ? 'あたらしい バージョンが あるか しらべているよ…'
+    : pwa.phase === 'installing' ? 'あたらしい バージョンを よみこんでいるよ…'
+    : 'あたらしい バージョンに こうしんしているよ…';
   return (
     <div className="screen">
       <Stage camera={[2.2, 2.2, 8]} target={[2.2, 0.9, 0]} fov={45}>
@@ -45,7 +59,13 @@ export function TitleScreen() {
       <div className="title-screen" style={{ pointerEvents: 'none' }}>
         <div style={{ pointerEvents: 'auto', width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {loadError && <div className="toast warn">{loadError}</div>}
-          {save ? (
+          {updating ? (
+            <div className="update-box" role="status">
+              <span className="spinner" aria-hidden="true" />
+              {updateText}
+              <span className="note" style={{ margin: 0 }}>セーブデータは そのままだよ。すこし まってね。</span>
+            </div>
+          ) : save ? (
             <>
               <button className="btn primary block" style={{ minHeight: 64, fontSize: '1.2rem' }} onClick={continueGame}>
                 ▶ つづきから（{save.player.name}）

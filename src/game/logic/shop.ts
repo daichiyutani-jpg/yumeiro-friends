@@ -2,7 +2,7 @@
 import { getFurniture, getOutfit, isSurface } from '../data/catalog';
 import { getItem } from '../data/items';
 import type { OutfitSlot, PlayerLook, Result, SaveData } from '../types';
-import { addItemsMut, clone, fail, ok, removeItemsMut } from './core';
+import { MAX_COINS, MAX_STACK, addItemsMut, clone, fail, ok, removeItemsMut } from './core';
 import { gainTeamExpMut } from './friends';
 import { ownsSurface } from './life';
 
@@ -129,4 +129,32 @@ export function finishMinigame(state: SaveData, score: number): Result {
   s.stats.minigames += 1;
   s.stats.bestScore = Math.max(s.stats.bestScore, Math.floor(score));
   return ok(s, undefined, reward);
+}
+
+// ---------- うる ----------
+
+/** そざいの うりね（おみせで かえない もの） */
+const MATERIAL_SELL: Record<string, number> = { petal: 3, star: 8, shell: 5, cotton: 5, drop: 8, clover: 20 };
+
+/**
+ * 1こ あたりの うりね。かった ねだんの はんぶん（そざいは きまった ねだん）。
+ * どうぐは しかけを とくのに つかうので うれない（undefined）。
+ */
+export function sellPrice(itemId: string): number | undefined {
+  const item = getItem(itemId);
+  if (!item || item.category === 'tool') return undefined;
+  if (MATERIAL_SELL[itemId] !== undefined) return MATERIAL_SELL[itemId];
+  return item.price !== undefined ? Math.max(1, Math.floor(item.price / 2)) : undefined;
+}
+
+export function sellItem(state: SaveData, itemId: string, qty = 1): Result {
+  const item = getItem(itemId);
+  const price = sellPrice(itemId);
+  if (!item || price === undefined) return fail('それは うれないよ');
+  if (!Number.isInteger(qty) || qty < 1 || qty > MAX_STACK) return fail('かずを えらんでね');
+  if (state.coins + price * qty > MAX_COINS) return fail('コインが いっぱいで これいじょう もてないよ');
+  const s = clone(state);
+  if (!removeItemsMut(s, { [itemId]: qty })) return fail(`${item.name}が たりないよ`);
+  addItemsMut(s, { coins: price * qty });
+  return ok(s, `${item.name}を ${qty}こ うって 🪙${price * qty} もらったよ`);
 }

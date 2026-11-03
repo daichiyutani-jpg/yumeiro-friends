@@ -13,6 +13,7 @@ import { readMove } from '../ui/Joystick';
 import { Creature, type CreatureAnim } from './Creature';
 import { EmojiSprite, Petals, Sparkles } from './Effects';
 import { Heroine, type HeroAnim } from './Heroine';
+import { ThemeScenery } from './ThemeScenery';
 import { geo, mat } from './shared';
 
 export type InteractKind = 'chest' | 'puzzle' | 'switch' | 'sign' | 'encounter' | 'portal';
@@ -41,7 +42,7 @@ export function forestInteractables(s: SaveData, world: WorldMap = FOREST): Inte
     list.push({ kind: 'puzzle', id: p.id, x: p.x, z: p.z, label: '🔎 しらべる' });
   }
   if (!s.forest.solvedPuzzles.includes(world.switchPuzzle)) {
-    const label = world.id === 'sea' ? '🐚 ならす' : '🌼 おす';
+    const label = world.switchLabel ?? '🌼 おす';
     for (const sw of world.switches) list.push({ kind: 'switch', id: sw.id, x: sw.x, z: sw.z, label });
   }
   list.push({ kind: 'sign', id: 'sign', x: world.sign.x, z: world.sign.z, label: '📜 よむ' });
@@ -347,7 +348,9 @@ export function ForestScene({ world = FOREST, save, now, onNear, onInteract, onP
 
   return (
     <>
-      {world.id === 'sea' ? (
+      {world.theme ? (
+        <ThemeScenery world={world} solved={solved} onGround={tapGround} />
+      ) : world.id === 'sea' ? (
         <>
           <color attach="background" args={['#e3f6ff']} />
           <fog attach="fog" args={['#e3f6ff', 24, 52]} />

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { FURNITURE, OUTFITS, SLOT_INFO, isSurface } from '../game/data/catalog';
-import { FOODS, SEEDS, SPECIALS, TOOLS } from '../game/data/items';
+import { ALL_ITEMS, FOODS, SEEDS, SPECIALS, TOOLS } from '../game/data/items';
 import { hasItems } from '../game/logic/core';
 import { ownsSurface } from '../game/logic/life';
-import { buyFurniture, buyItem, buyOutfit, craftFurniture, craftOutfit } from '../game/logic/shop';
+import { buyFurniture, buyItem, buyOutfit, craftFurniture, craftOutfit, sellItem, sellPrice } from '../game/logic/shop';
 import type { FurnitureDef, Result, SaveData } from '../game/types';
 import { useGame } from '../state/store';
 import { Confirm, CostList, Paged, Screen, useSave } from '../ui/common';
 
-type Tab = 'food' | 'seed' | 'tool' | 'outfit' | 'furniture' | 'atelier';
+type Tab = 'food' | 'seed' | 'tool' | 'outfit' | 'furniture' | 'atelier' | 'sell';
 const TABS: [Tab, string][] = [
   ['food', '🍓 ごはん'],
   ['seed', '🌱 たね'],
@@ -16,17 +16,20 @@ const TABS: [Tab, string][] = [
   ['outfit', '👗 ふく'],
   ['furniture', '🏠 おうち'],
   ['atelier', '🧵 アトリエ'],
+  ['sell', '💰 うる'],
 ];
 
 interface Pending {
   title: string;
-  cost: Record<string, number>;
+  cost?: Record<string, number>;
+  text?: string;
   run: (s: SaveData) => Result;
 }
 
 const TAB_NOTE: Partial<Record<Tab, string>> = {
   tool: 'どうぐが あれば、ちからを もつ なかまが いなくても しかけが とけるよ（なくならないよ）。',
   atelier: 'あつめた そざいで ふくや おうちの かぐ・かべがみを つくれるよ。',
+  sell: 'いらない ものを コインに かえられるよ（かった ねだんの はんぶん）。どうぐは しかけに つかうので うれないよ。',
 };
 
 const KIND_NOTE: Partial<Record<FurnitureDef['kind'], string>> = { wall: 'かべに かける', rug: 'ゆかに しく', wallpaper: 'かべがみ', flooring: 'ゆか' };
@@ -116,6 +119,27 @@ export function ShopScreen() {
               </div>
             );
           }) : []),
+          ...(tab === 'sell' ? ALL_ITEMS.filter((it) => (save.items[it.id] ?? 0) > 0 && sellPrice(it.id) !== undefined).map((it) => {
+            const have = save.items[it.id] ?? 0;
+            const p = sellPrice(it.id)!;
+            const sell = (n: number) => ask({ title: `${it.name}を ${n}こ うる？`, text: `${it.icon} ${it.name} ×${n} → 🪙${p * n} もらえるよ`, run: (s) => sellItem(s, it.id, n) });
+            return (
+              <div key={it.id} className="item-tile">
+                <span className="ic">{it.icon}</span>
+                <div className="grow">
+                  <div className="n">{it.name} <span className="muted">×{have}</span></div>
+                  <div className="muted" style={{ fontSize: '.78rem' }}>1こ 🪙{p} ・ ぜんぶで 🪙{p * have}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="btn small primary" onClick={() => sell(1)}>1こ うる</button>
+                  {have > 1 && <button className="btn small" onClick={() => sell(have)}>ぜんぶ</button>}
+                </div>
+              </div>
+            );
+          }) : []),
+          ...(tab === 'sell' && !ALL_ITEMS.some((it) => (save.items[it.id] ?? 0) > 0 && sellPrice(it.id) !== undefined)
+            ? [<p key="none" className="note center">うれる ものを もっていないよ</p>]
+            : []),
           ...(tab === 'atelier' ? OUTFITS.filter((o) => o.craft).map((o) => {
               const have = save.ownedOutfits.includes(o.id);
               return (
@@ -156,6 +180,7 @@ export function ShopScreen() {
       {pending && (
         <Confirm
           title={pending.title}
+          text={pending.text}
           cost={pending.cost}
           okLabel="はい"
           onCancel={() => setPending(null)}

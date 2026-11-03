@@ -1,8 +1,9 @@
 // ぼうけん先の マップの 一覧。ID から マップや 宝箱・しかけ を ひく。
 import { FOREST, type ChestDef, type EncounterDef, type PickupDef, type PuzzleDef, type WorldMap } from './forest';
+import { MORE_WORLDS } from './moreWorlds';
 import { SEA } from './sea';
 
-export const WORLD_MAPS: WorldMap[] = [FOREST, SEA];
+export const WORLD_MAPS: WorldMap[] = [FOREST, SEA, ...MORE_WORLDS];
 
 export function getWorldMap(id: string | null | undefined): WorldMap {
   return WORLD_MAPS.find((m) => m.id === id) ?? FOREST;

@@ -18,29 +18,39 @@ export const OUTFITS: OutfitDef[] = [
   { id: 'top_mint', name: 'ミントの パーカー', slot: 'top', icon: '🧥', color: '#a8ead2', shape: 'tee', price: 120, source: 'おみせ' },
   { id: 'op_sakura', name: 'さくらの ワンピース', slot: 'top', icon: '👗', color: '#ffc6dc', color2: '#ffffff', shape: 'onepiece', price: 200, source: 'おみせ' },
   { id: 'op_star', name: 'ほしぞら ワンピース', slot: 'top', icon: '👗', color: '#9d8fe0', color2: '#ffe066', shape: 'onepiece', craft: { star: 4, cotton: 2 }, source: 'アトリエで つくる' },
+  { id: 'op_sweets', name: 'おかしの ワンピース', slot: 'top', icon: '👗', color: '#ffd6a8', color2: '#ff9ec7', shape: 'onepiece', source: 'おかしの まちの たからばこ' },
   // ボトムス（shape: skirt / shorts）
   { id: 'bt_skirt_blue', name: 'みずいろの スカート', slot: 'bottom', icon: '👗', color: '#9fd8ff', shape: 'skirt', source: 'さいしょから' },
   { id: 'bt_shorts', name: 'クリームの ショートパンツ', slot: 'bottom', icon: '🩳', color: '#fff1c9', shape: 'shorts', source: 'さいしょから' },
   { id: 'bt_skirt_pink', name: 'フリルの スカート', slot: 'bottom', icon: '👗', color: '#ff9ec7', color2: '#ffffff', shape: 'skirt', price: 100, source: 'おみせ' },
+  { id: 'bt_petal', name: 'はなびらスカート', slot: 'bottom', icon: '🌸', color: '#ffd1e3', color2: '#ffffff', shape: 'skirt', source: 'はなの ていえんの たからばこ' },
   // くつ
   { id: 'sh_pink', name: 'ピンクの くつ', slot: 'shoes', icon: '👟', color: '#ff8fbf', shape: 'shoe', source: 'さいしょから' },
   { id: 'sh_boots', name: 'しろい ブーツ', slot: 'shoes', icon: '👢', color: '#ffffff', shape: 'boot', price: 90, source: 'おみせ' },
   { id: 'sh_glass', name: 'ガラスの くつ', slot: 'shoes', icon: '👠', color: '#d8f3ff', shape: 'shoe', craft: { drop: 3, star: 2 }, source: 'アトリエで つくる', princess: true },
+  { id: 'sh_star', name: 'ほしぞらブーツ', slot: 'shoes', icon: '👢', color: '#c9b8ff', shape: 'boot', source: 'ほしぞらの しまの たからばこ' },
+  { id: 'sh_crystal', name: 'クリスタルの くつ', slot: 'shoes', icon: '👠', color: '#f3e0ff', shape: 'shoe', source: 'プリンセスキャッスルの たからばこ', princess: true },
   // ぼうし
   { id: 'hat_ribbon', name: 'リボンの ぼうし', slot: 'hat', icon: '👒', color: '#fff1c9', color2: '#ff8fbf', shape: 'brim', price: 80, source: 'おみせ' },
   { id: 'hat_beret', name: 'ベレーぼう', slot: 'hat', icon: '🧢', color: '#b98cff', shape: 'beret', price: 80, source: 'おみせ' },
   { id: 'hat_flower', name: 'はなかんむり', slot: 'hat', icon: '💐', color: '#ff9ec7', color2: '#fff8a8', shape: 'wreath', craft: { petal: 5, clover: 1 }, source: 'アトリエで つくる' },
   { id: 'hat_straw', name: 'むぎわらぼうし', slot: 'hat', icon: '👒', color: '#f6dc9c', color2: '#8fd3ff', shape: 'brim', source: 'うみの せかいの たからばこ' },
+  { id: 'hat_tulip', name: 'チューリップの かんむり', slot: 'hat', icon: '🌷', color: '#ff8fbf', color2: '#ffe066', shape: 'wreath', source: 'はなの ていえんの たからばこ' },
+  { id: 'hat_mushroom', name: 'きのこの ベレー', slot: 'hat', icon: '🍄', color: '#ff7f8f', shape: 'beret', source: 'ふしぎな 森の たからばこ' },
   // アクセサリー
   { id: 'acc_star', name: 'ほしの ネックレス', slot: 'accessory', icon: '⭐', color: '#ffd84d', shape: 'necklace', source: 'さくらの森の たからばこ' },
   { id: 'acc_shell', name: 'かいがらの ネックレス', slot: 'accessory', icon: '🐚', color: '#ffd1e3', shape: 'necklace', source: 'うみの せかいの たからばこ' },
   { id: 'acc_bag', name: 'ハートの ポシェット', slot: 'accessory', icon: '👜', color: '#ff7fae', shape: 'bag', price: 110, source: 'おみせ' },
   { id: 'acc_wand', name: 'ゆめの ステッキ', slot: 'accessory', icon: '🪄', color: '#ffe066', color2: '#ff9ec7', shape: 'wand', craft: { star: 3, petal: 3 }, source: 'アトリエで つくる' },
+  { id: 'acc_lolli', name: 'ぺろぺろキャンディの ステッキ', slot: 'accessory', icon: '🍭', color: '#ff9ec7', color2: '#a8ead2', shape: 'wand', source: 'おかしの まちの たからばこ' },
   // ティアラ
   { id: 'tiara_sakura', name: 'さくらの ティアラ', slot: 'tiara', icon: '👑', color: '#ffd84d', color2: '#ff8fbf', shape: 'tiara', source: 'さくらの森の たからばこ', princess: true },
   { id: 'tiara_moon', name: 'つきの ティアラ', slot: 'tiara', icon: '👑', color: '#e6e6ff', color2: '#b98cff', shape: 'tiara', craft: { star: 3, drop: 2 }, source: 'アトリエで つくる', princess: true },
+  { id: 'tiara_star', name: 'ほしの ティアラ', slot: 'tiara', icon: '👑', color: '#fff3a8', color2: '#8fd3ff', shape: 'tiara', source: 'ほしぞらの しまの たからばこ', princess: true },
   // プリンセスドレス
   { id: 'dress_yumeiro', name: 'ゆめいろドレス', slot: 'dress', icon: '👗', color: '#ffc6e0', color2: '#e6d6ff', shape: 'gown', craft: { petal: 8, star: 3, drop: 2, cotton: 3 }, source: 'アトリエで つくる', princess: true },
+  { id: 'dress_rose', name: 'ローズドレス', slot: 'dress', icon: '👗', color: '#ff9ec7', color2: '#fff1c9', shape: 'gown', source: 'プリンセスキャッスルの たからばこ', princess: true },
+  { id: 'dress_fairy', name: 'ようせいの ドレス', slot: 'dress', icon: '👗', color: '#bfe6c9', color2: '#e6d6ff', shape: 'gown', source: 'ふしぎな 森の たからばこ', princess: true },
   { id: 'dress_starry', name: 'ほしぞらドレス', slot: 'dress', icon: '👗', color: '#a99cf0', color2: '#fff3a8', shape: 'gown', craft: { star: 8, drop: 4, shell: 2 }, source: 'アトリエで つくる', princess: true },
 ];
 
@@ -133,9 +143,9 @@ export interface WorldDef {
 export const WORLDS: WorldDef[] = [
   { id: 'sakura', name: 'さくらの森', icon: '🌸', implemented: true, unlockText: 'あそべるよ', color: '#ffd1e3' },
   { id: 'sea', name: 'うみの せかい', icon: '🐚', implemented: true, unlockText: 'さくらの森で たからばこを 3こ あけると いけるよ', color: '#c9ecff' },
-  { id: 'sweets', name: 'おかしの まち', icon: '🍰', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ffe8c9' },
-  { id: 'starisland', name: 'ほしぞらの しま', icon: '🌙', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ddd6ff' },
-  { id: 'garden', name: 'はなの ていえん', icon: '🌷', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ffe0ec' },
-  { id: 'castle', name: 'プリンセスキャッスル', icon: '🏰', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#f3e0ff' },
-  { id: 'mystery', name: 'ふしぎな 森', icon: '🍄', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#d9f2d9' },
+  { id: 'sweets', name: 'おかしの まち', icon: '🍰', implemented: true, unlockText: 'うみの せかいで たからばこを 4こ あけると いけるよ', color: '#ffe8c9' },
+  { id: 'starisland', name: 'ほしぞらの しま', icon: '🌙', implemented: true, unlockText: 'おかしの まちで たからばこを 4こ あけると いけるよ', color: '#ddd6ff' },
+  { id: 'garden', name: 'はなの ていえん', icon: '🌷', implemented: true, unlockText: 'ほしぞらの しまで たからばこを 4こ あけると いけるよ', color: '#ffe0ec' },
+  { id: 'castle', name: 'プリンセスキャッスル', icon: '🏰', implemented: true, unlockText: 'はなの ていえんで たからばこを 4こ あけると いけるよ', color: '#f3e0ff' },
+  { id: 'mystery', name: 'ふしぎな 森', icon: '🍄', implemented: true, unlockText: 'プリンセスキャッスルで たからばこを 4こ あけると いけるよ', color: '#d9f2d9' },
 ];

@@ -5,7 +5,7 @@ import type { WorldMap } from '../game/data/forest';
 import { findEncounter, getWorldMap } from '../game/data/maps';
 import { getItem, itemIcon, itemName } from '../game/data/items';
 import { ABILITY_INFO, getSpecies } from '../game/data/species';
-import { befriend, checkSwitchOrder, enterForest, forestProgress, getPuzzle, openChest, pickUp, seeEncounter, solvePuzzle } from '../game/logic/adventure';
+import { befriend, checkSwitchOrder, enterForest, forestProgress, getPuzzle, openChest, pickUp, seeEncounter, solvePuzzle, strongEnough } from '../game/logic/adventure';
 import { displayName, friendAbilities, getFriend, toggleTeam } from '../game/logic/friends';
 import { useGame } from '../state/store';
 import { Creature } from '../three/Creature';
@@ -52,7 +52,10 @@ export function TeamPicker() {
 }
 
 /** かんばんの 文字の いろ（しろい かいがらは うすくて よめないので こい いろに する） */
-const SIGN_TEXT: Record<string, string> = { '#ff7fb6': '#e4609e', '#ff9ec7': '#e4609e', '#ffd84d': '#b08a00', '#6fc4ff': '#2f7fbf', '#ffffff': '#8a86a0' };
+const SIGN_TEXT: Record<string, string> = { '#ff7fb6': '#e4609e', '#ff9ec7': '#e4609e', '#ffd84d': '#b08a00', '#6fc4ff': '#2f7fbf', '#ffffff': '#8a86a0',
+  '#e6e6ff': '#8a86a0', '#ffe066': '#b08a00', '#9fe08f': '#4f9f3f', '#a8ead2': '#3f9f7f', '#8fd3ff': '#2f7fbf', '#cdb8ff': '#8a6fd0',
+  '#ff9f7f': '#d0603f', '#ff8fbf': '#e4609e', '#ff7f9f': '#e4507a', '#ff7f8f': '#e4506a',
+};
 
 export function AdventureScreen() {
   const save = useSave();
@@ -242,17 +245,21 @@ function AdventureDialog({ world, dialog, setDialog, onHome }: { world: WorldMap
             {p.hint}
             {ab && (
               <span className="tag pink" style={{ marginLeft: 6 }}>
-                ひつような ちから：{ab.icon} {ab.name}
+                ひつような ちから：{ab.icon} {ab.name}{p.minLevel ? `（Lv.${p.minLevel} いじょう）` : ''}
               </span>
             )}
           </p>
           {/* ボタンが ふえても 1画面に おさまるように 2れつで ならべる */}
           <div className="actions grid-actions">
-            {helpers.map((f) => (
-              <button key={f!.uid} className="btn primary block" onClick={() => solve({ kind: 'ability', friendUid: f!.uid })}>
-                <CreatureIcon look={getSpecies(f!.speciesId).look} size={30} /> {displayName(f!)}の {ab?.icon}{ab?.name}を つかう
-              </button>
-            ))}
+            {helpers.map((f) => {
+              const weak = !strongEnough(p, f!.level);
+              return (
+                <button key={f!.uid} className="btn primary block" disabled={weak} onClick={() => solve({ kind: 'ability', friendUid: f!.uid })}>
+                  <CreatureIcon look={getSpecies(f!.speciesId).look} size={30} /> {displayName(f!)}の {ab?.icon}{ab?.name}を つかう
+                  {weak && `（Lv.${f!.level}・あと ${p.minLevel! - f!.level}）`}
+                </button>
+              );
+            })}
             {p.alt && (
               <button className="btn lav block" disabled={altHave < p.alt.count} onClick={() => solve({ kind: 'item' })}>
                 {getItem(p.alt.item)?.icon} {p.alt.text}（もってる {altHave}{altHave < p.alt.count ? '・たりない' : ''}）
@@ -290,10 +297,22 @@ function AdventureDialog({ world, dialog, setDialog, onHome }: { world: WorldMap
             {e.text}
             <br />
             {ABILITY_INFO[sp.ability].icon} {ABILITY_INFO[sp.ability].name}の ちからを もっているよ。
+            {e.gift && (
+              <>
+                <br />
+                <span className="tag pink">
+                  おみやげ：{itemIcon(e.gift.item)} {itemName(e.gift.item)} ×{e.gift.count}（もってる {save.items[e.gift.item] ?? 0}）
+                </span>
+              </>
+            )}
           </p>
+          {e.gift && (save.items[e.gift.item] ?? 0) < e.gift.count && (
+            <p className="note center" style={{ margin: 0 }}>おみやげは おみせの「ごはん」で かえるよ</p>
+          )}
           <div className="actions">
             <button
               className="btn primary block"
+              disabled={!!e.gift && (save.items[e.gift.item] ?? 0) < e.gift.count}
               onClick={() => {
                 const r = apply((s) => befriend(s, e.id), { quiet: true, sound: 'fanfare' });
                 if (r?.ok) setDialog({ kind: 'befriended', speciesId: e.species });
@@ -338,7 +357,7 @@ function AdventureDialog({ world, dialog, setDialog, onHome }: { world: WorldMap
               );
             })}
           </p>
-          <p className="center note">{world.id === 'sea' ? 'かいがらを この じゅんばんで ならしてね' : 'はなの スイッチを この じゅんばんで おしてね'}。まちがえても だいじょうぶ。</p>
+          <p className="center note">{world.switchText ?? 'はなの スイッチを この じゅんばんで おしてね'}。まちがえても だいじょうぶ。</p>
         </Modal>
       );
     case 'portal':

@@ -90,4 +90,7 @@ export const SEA = {
   ],
   island: { x: -19, z: -12 },
   pickupRespawnMs: 10 * 60 * 1000,
+  unlock: { world: 'sakura', chests: 3 },
+  switchLabel: '🐚 ならす',
+  switchText: 'かいがらを この じゅんばんで ならしてね',
 };

@@ -2,6 +2,7 @@
 import { FOREST } from './data/forest';
 import { getWorldMap } from './data/maps';
 import { seaLayout } from './seaLayout';
+import { themeLayout } from './themeLayout';
 
 export interface Circle {
   x: number;
@@ -133,7 +134,8 @@ export function resolveMove(x: number, z: number, radius: number, solved: readon
   const b = getWorldMap(worldId).bounds;
   let nx = Math.max(b.minX, Math.min(b.maxX, x));
   let nz = Math.max(b.minZ, Math.min(b.maxZ, z));
-  const colliders = worldId === 'sea' ? seaLayout().colliders : forestLayout().colliders;
+  const map = getWorldMap(worldId);
+  const colliders = worldId === 'sea' ? seaLayout().colliders : map.theme ? themeLayout(map).colliders : forestLayout().colliders;
   for (const c of colliders) {
     if (c.until && solved.includes(c.until)) continue;
     const dx = nx - c.x;

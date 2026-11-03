@@ -1,8 +1,15 @@
 import { WORLDS } from '../game/data/catalog';
-import { SEA_UNLOCK_CHESTS, forestProgress, isWorldUnlocked } from '../game/logic/adventure';
+import { getWorldMap } from '../game/data/maps';
+import { chestsToUnlock, forestProgress } from '../game/logic/adventure';
 import { useGame } from '../state/store';
 import { Paged, Screen, useSave } from '../ui/common';
 import { TeamPicker } from './Adventure';
+
+/** むずかしさの ほし（3つめ いこうは すこし むずかしい） */
+function stars(worldId: string): string {
+  const t = getWorldMap(worldId).tier ?? 0;
+  return '★'.repeat(Math.min(5, 1 + Math.ceil(t / 1.25)));
+}
 
 export function WorldsScreen() {
   const save = useSave();
@@ -20,9 +27,11 @@ export function WorldsScreen() {
       <Paged
         className="grid list"
         items={WORLDS.map((w) => {
-          const open = w.implemented && isWorldUnlocked(save, w.id);
+          const left = w.implemented ? chestsToUnlock(save, w.id) : null;
+          const open = left === 0;
           const p = forestProgress(save, w.id);
-          const left = SEA_UNLOCK_CHESTS - forestProgress(save, 'sakura').chests;
+          const map = getWorldMap(w.id);
+          const prev = map.unlock ? getWorldMap(map.unlock.world).name : '';
           return (
             <button
               key={w.id}
@@ -30,17 +39,17 @@ export function WorldsScreen() {
               onClick={() =>
                 open
                   ? go('adventure', w.id)
-                  : toast(w.implemented ? `さくらの森で たからばこを あと ${left}こ あけると いけるよ` : `${w.name}は まだ じゅんびちゅう だよ。おたのしみに！`)
+                  : toast(left !== null ? `${prev}で たからばこを あと ${left}こ あけると いけるよ` : `${w.name}は まだ じゅんびちゅう だよ。おたのしみに！`)
               }
             >
               <span className="ic" style={{ background: w.color }}>{open ? w.icon : '🔒'}</span>
               <span className="grow">
-                <b style={{ fontSize: '1rem' }}>{w.name}</b>
+                <b style={{ fontSize: '1rem' }}>{w.name}</b> <span className="world-stars" aria-label="むずかしさ">{stars(w.id)}</span>
                 <br />
                 {open ? (
                   <span className="note" style={{ margin: 0 }}>たからばこ {p.chests}/{p.chestTotal} ・ しかけ {p.puzzles}/{p.puzzleTotal} ・ であい {p.friends}/{p.friendTotal}</span>
                 ) : (
-                  <span className="tag">{w.implemented ? `${w.unlockText}（あと ${left}こ）` : w.unlockText}</span>
+                  <span className="tag">{left !== null ? `${w.unlockText}（あと ${left}こ）` : w.unlockText}</span>
                 )}
               </span>
               {open && <span className="btn primary small">いく ▶</span>}

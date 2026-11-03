@@ -1,11 +1,11 @@
-// 冒険（さくらの森・うみの せかい）のロジック: 宝箱・謎解き・出会い・落とし物
+// 冒険（さくらの森・うみの せかい・3つめ いこうの ワールド）のロジック: 宝箱・謎解き・出会い・落とし物
 // 進みぐあいは ワールドを またいで s.forest に まとめて 記録する（ID が ワールドごとに ちがうので まざらない）
 import { FOREST, type PuzzleDef, type WorldMap } from '../data/forest';
-import { findChest, findEncounter, findPickup, findPuzzle, getWorldMap } from '../data/maps';
+import { WORLD_MAPS, findChest, findEncounter, findPickup, findPuzzle, getWorldMap } from '../data/maps';
 import { ABILITY_INFO, getSpecies } from '../data/species';
 import type { Result, SaveData } from '../types';
 import { addItemsMut, clone, fail, hasItems, ok, removeItemsMut } from './core';
-import { addFriendMut, displayName, friendAbilities, gainTeamExpMut, getFriend, markDex, teamAbilities } from './friends';
+import { addFriendMut, displayName, friendAbilities, gainTeamExpMut, getFriend, markDex } from './friends';
 
 export function isSolved(s: SaveData, puzzleId: string): boolean {
   return s.forest.solvedPuzzles.includes(puzzleId);
@@ -41,11 +41,18 @@ export function openChest(state: SaveData, chestId: string): Result {
 
 export type PuzzleMethod = { kind: 'ability'; friendUid: string } | { kind: 'item' } | { kind: 'switch' };
 
+/** なかまが その しかけに ちからを つかえるか（レベルが たりているか） */
+export function strongEnough(p: PuzzleDef, level: number): boolean {
+  return level >= (p.minLevel ?? 1);
+}
+
 /** その謎解きに使える方法の一覧（表示用） */
 export function puzzleOptions(s: SaveData, puzzleId: string): { friendUid?: string; canUseItem: boolean; itemHave: number } {
   const p = getPuzzle(puzzleId);
   if (!p) return { canUseItem: false, itemHave: 0 };
-  const helper = p.ability ? teamAbilities(s).get(p.ability) : undefined;
+  const helper = p.ability
+    ? s.team.map((u) => getFriend(s, u)).find((f) => f && friendAbilities(f).includes(p.ability!) && strongEnough(p, f.level))
+    : undefined;
   const have = p.alt ? (s.items[p.alt.item] ?? 0) : 0;
   return { friendUid: helper?.uid, canUseItem: !!p.alt && have >= p.alt.count, itemHave: have };
 }
@@ -61,6 +68,7 @@ export function solvePuzzle(state: SaveData, puzzleId: string, method: PuzzleMet
     const f = getFriend(s, method.friendUid);
     if (!f || !s.team.includes(f.uid)) return fail('チームの なかまを えらんでね');
     if (!friendAbilities(f).includes(p.ability)) return fail(`${ABILITY_INFO[p.ability].name}の ちからが ひつようだよ`);
+    if (!strongEnough(p, f.level)) return fail(`レベル ${p.minLevel} いじょうの なかまで ないと ちからが たりないよ`);
     by = `${displayName(f)}の ${ABILITY_INFO[p.ability].name}の ちから`;
   } else if (method.kind === 'item') {
     if (!p.alt) return fail('アイテムでは とけないよ');
@@ -90,6 +98,7 @@ export function befriend(state: SaveData, encounterId: string): Result {
   if (!e) return fail('だれも いないよ');
   if (state.forest.befriended.includes(encounterId)) return fail('もう なかまに なっているよ');
   const s = clone(state);
+  if (e.gift && !removeItemsMut(s, { [e.gift.item]: e.gift.count })) return fail('おみやげが たりないよ');
   s.forest.befriended.push(encounterId);
   const f = addFriendMut(s, e.species);
   gainTeamExpMut(s, 10);
@@ -133,12 +142,16 @@ export function forestProgress(s: SaveData, worldId = 'sakura'): { chests: numbe
   };
 }
 
-/** うみの せかいは さくらの森で たからばこを 3こ あけると いける */
-export const SEA_UNLOCK_CHESTS = 3;
+/** あと なんこ たからばこを あければ いけるか（0 なら いける。マップが ない ワールドは null） */
+export function chestsToUnlock(s: SaveData, worldId: string): number | null {
+  const m = WORLD_MAPS.find((w) => w.id === worldId);
+  if (!m) return null;
+  if (!m.unlock) return 0;
+  return Math.max(0, m.unlock.chests - forestProgress(s, m.unlock.world).chests);
+}
+
 export function isWorldUnlocked(s: SaveData, worldId: string): boolean {
-  if (worldId === 'sakura') return true;
-  if (worldId === 'sea') return forestProgress(s, 'sakura').chests >= SEA_UNLOCK_CHESTS;
-  return false;
+  return chestsToUnlock(s, worldId) === 0;
 }
 
 export function enterForest(state: SaveData): SaveData {

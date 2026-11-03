@@ -25,6 +25,8 @@ export interface PuzzleDef {
   alt?: { item: string; count: number; consume: boolean; text: string };
   hint: string;
   solvedText: string;
+  /** この レベル いじょうの なかまで ないと ちからが たりない（3つめの ワールドから） */
+  minLevel?: number;
 }
 
 export interface EncounterDef {
@@ -33,6 +35,8 @@ export interface EncounterDef {
   x: number;
   z: number;
   text: string;
+  /** なかまに さそう ときに わたす おみやげ（へる） */
+  gift?: { item: string; count: number };
 }
 
 export interface PickupDef {
@@ -77,6 +81,35 @@ export interface WorldMap {
   pickups: PickupDef[];
   obstacles: ObstacleDef[];
   pickupRespawnMs: number;
+  /** この ワールドに いける じょうけん（まえの ワールドで あけた たからばこの かず）。なければ さいしょから いける */
+  unlock?: { world: string; chests: number };
+  /** むずかしさ（0 = さくらの森・うみ、1〜 = 3つめ いこう） */
+  tier?: number;
+  /** スイッチの ボタン名と かんばんの せつめい */
+  switchLabel?: string;
+  switchText?: string;
+  /** みためを データで きめる ワールド（さくらの森・うみ いがい） */
+  theme?: WorldTheme;
+}
+
+export type DecorKind = 'lollipop' | 'crystal' | 'tulip' | 'tower' | 'mushroom';
+export type LandmarkKind = 'cake' | 'moon' | 'fountain' | 'castle' | 'bigshroom';
+
+export interface WorldTheme {
+  bg: string;
+  sky: string;
+  groundLight: string;
+  sun: string;
+  ground: string;
+  path: string;
+  /** しかけの ふさいでいる もの の いろ */
+  accent: string;
+  decor: DecorKind;
+  decorColors: string[];
+  landmark: { kind: LandmarkKind; x: number; z: number; r: number };
+  /** よるの ワールド（ほしを ちらす） */
+  night?: boolean;
+  sparkle: string;
 }
 
 export const FOREST = {
