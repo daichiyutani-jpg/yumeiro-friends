@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EGGS } from '../src/game/data/catalog';
+import { EGGS, getOutfit } from '../src/game/data/catalog';
 import { FOREST } from '../src/game/data/forest';
 import { BASE_SPECIES, SPECIES, getSpecies } from '../src/game/data/species';
 import { FOODS, SEEDS, getItem } from '../src/game/data/items';
@@ -11,7 +11,8 @@ import {
   buyEgg, collectHelpers, eggOdds, harvest, hatchEgg, placeFurniture, plant, plotStatus, rollEgg, storeFurniture, moveFurniture, toggleHelper, HELPER_INTERVAL,
   ownsSurface, rotateFurniture, setSurface, ROOM_WALL,
 } from '../src/game/logic/life';
-import { befriend, checkSwitchOrder, openChest, pickUp, solvePuzzle } from '../src/game/logic/adventure';
+import { befriend, checkSwitchOrder, forestProgress, isWorldUnlocked, openChest, pickUp, solvePuzzle } from '../src/game/logic/adventure';
+import { SEA } from '../src/game/data/sea';
 import { buyFurniture, buyItem, canTransform, craftOutfit, equip, finishMinigame, transform } from '../src/game/logic/shop';
 import { advanceClock, MAX_JUMP } from '../src/game/logic/time';
 import { advanceTutorial } from '../src/game/logic/tutorial';
@@ -420,5 +421,76 @@ describe('チュートリアル', () => {
 describe('食べ物の定義', () => {
   it('すべての ごはんに値段と経験値がある', () => {
     for (const f of FOODS) expect(f.price! > 0 && f.exp > 0).toBe(true);
+  });
+});
+
+describe('うみの せかい', () => {
+  it('さくらの森で たからばこを 3こ あけると いけるように なる', () => {
+    let s = fresh();
+    expect(isWorldUnlocked(s, 'sakura')).toBe(true);
+    expect(isWorldUnlocked(s, 'sea')).toBe(false);
+    s = must(openChest(s, 'c_start'));
+    s = must(solvePuzzle(s, 'p_flower', { kind: 'ability', friendUid: s.friends[0].uid }));
+    s = must(openChest(s, 'c_flower'));
+    expect(isWorldUnlocked(s, 'sea')).toBe(false);
+    s.items.petal = 0;
+    s.coins = 1000;
+    s = must(buyItem(s, 'lantern'));
+    s = must(solvePuzzle(s, 'p_cave', { kind: 'item' }));
+    s = must(openChest(s, 'c_cave'));
+    expect(isWorldUnlocked(s, 'sea')).toBe(true);
+  });
+  it('すすみぐあいは ワールドごとに かぞえる', () => {
+    let s = fresh();
+    s = must(openChest(s, 'cs_start'));
+    expect(forestProgress(s, 'sea').chests).toBe(1);
+    expect(forestProgress(s, 'sea').chestTotal).toBe(SEA.chests.length);
+    expect(forestProgress(s, 'sakura').chests).toBe(0);
+    expect(s.items.fishjelly).toBe(2);
+  });
+  it('しかけを とくと たからばこが あき、あたらしい ふくが もらえる', () => {
+    let s = fresh();
+    expect(openChest(s, 'cs_cove').ok).toBe(false);
+    s.coins = 1000;
+    s = must(buyItem(s, 'gloves'));
+    s = must(solvePuzzle(s, 'ps_log', { kind: 'item' }));
+    s = must(openChest(s, 'cs_cove'));
+    expect(s.ownedOutfits).toContain('hat_straw');
+  });
+  it('わたの ふうせんで はなれじまへ。わたは へる', () => {
+    let s = fresh();
+    s.items.cotton = 3;
+    s = must(solvePuzzle(s, 'ps_island', { kind: 'item' }));
+    expect(s.items.cotton).toBeUndefined();
+    s = must(openChest(s, 'cs_island'));
+  });
+  it('かいがらの じゅんばん（みずいろ → しろ → ピンク）', () => {
+    expect(checkSwitchOrder(['sh_blue'], SEA)).toBe('continue');
+    expect(checkSwitchOrder(['sh_pink'], SEA)).toBe('wrong');
+    expect(checkSwitchOrder(['sh_blue', 'sh_white', 'sh_pink'], SEA)).toBe('ok');
+    let s = fresh();
+    s = must(solvePuzzle(s, 'ps_shells', { kind: 'switch' }));
+    s = must(openChest(s, 'cs_shells'));
+    expect(s.ownedOutfits).toContain('acc_shell');
+  });
+  it('うみで であった なかまを なかまに できる', () => {
+    let s = fresh();
+    s = must(befriend(s, 'es_pen'));
+    expect(s.friends.some((f) => f.speciesId === 'yukipen')).toBe(true);
+    expect(forestProgress(s, 'sea').friends).toBe(1);
+  });
+  it('うみの おとしものを ひろえる', () => {
+    let s = fresh();
+    s = must(pickUp(s, 'pks2', T0));
+    expect(s.items.shell).toBe(2);
+  });
+  it('ID は ワールドを またいで かさならず、ごほうびの ふくや アイテムが ある', () => {
+    const ids = [FOREST, SEA].flatMap((m) => [...m.chests, ...m.puzzles, ...m.encounters, ...m.pickups, ...m.switches].map((x) => x.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const c of SEA.chests) {
+      for (const k of Object.keys(c.reward)) if (k !== 'coins') expect(getItem(k)).toBeTruthy();
+      if (c.outfit) expect(getOutfit(c.outfit)).toBeTruthy();
+    }
+    for (const e of SEA.encounters) expect(getSpecies(e.species)).toBeTruthy();
   });
 });

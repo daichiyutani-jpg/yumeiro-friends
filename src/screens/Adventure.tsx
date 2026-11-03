@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { getOutfit } from '../game/data/catalog';
-import { FOREST } from '../game/data/forest';
+import type { WorldMap } from '../game/data/forest';
+import { findEncounter, getWorldMap } from '../game/data/maps';
 import { getItem, itemIcon, itemName } from '../game/data/items';
 import { ABILITY_INFO, getSpecies } from '../game/data/species';
 import { befriend, checkSwitchOrder, enterForest, forestProgress, getPuzzle, openChest, pickUp, seeEncounter, solvePuzzle } from '../game/logic/adventure';
@@ -50,8 +51,13 @@ export function TeamPicker() {
   );
 }
 
+/** かんばんの 文字の いろ（しろい かいがらは うすくて よめないので こい いろに する） */
+const SIGN_TEXT: Record<string, string> = { '#ff7fb6': '#e4609e', '#ff9ec7': '#e4609e', '#ffd84d': '#b08a00', '#6fc4ff': '#2f7fbf', '#ffffff': '#8a86a0' };
+
 export function AdventureScreen() {
   const save = useSave();
+  // どの ワールドに いくかは go('adventure', 'sea') の param で きまる
+  const world = getWorldMap(useGame((s) => s.param));
   const apply = useGame((s) => s.apply);
   const patch = useGame((s) => s.patch);
   const tutorial = useGame((s) => s.tutorial);
@@ -62,7 +68,7 @@ export function AdventureScreen() {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [pressed, setPressed] = useState<string[]>([]);
   const [floats, setFloats] = useState<{ id: number; text: string }[]>([]);
-  const heroPos = useRef(new THREE.Vector3(FOREST.spawn.x, 0, FOREST.spawn.z));
+  const heroPos = useRef(new THREE.Vector3(world.spawn.x, 0, world.spawn.z));
   const pickedRef = useRef(new Set<string>());
   const pressedRef = useRef<string[]>([]);
 
@@ -97,17 +103,17 @@ export function AdventureScreen() {
           setDialog({ kind: 'puzzle', id: t.id });
           break;
         case 'switch': {
-          if (s.forest.solvedPuzzles.includes('p_switch')) return;
+          if (s.forest.solvedPuzzles.includes(world.switchPuzzle)) return;
           const prev = pressedRef.current;
           if (prev.includes(t.id)) return;
           const next = [...prev, t.id];
-          const res = checkSwitchOrder(next);
+          const res = checkSwitchOrder(next, world);
           if (res === 'wrong') {
             sfx.no();
             toast('あれれ？ じゅんばんが ちがうみたい。かんばんを みてみよう', 'info');
             pressedRef.current = [];
           } else if (res === 'ok') {
-            const r = apply((st) => solvePuzzle(st, 'p_switch', { kind: 'switch' }), { sound: 'fanfare' });
+            const r = apply((st) => solvePuzzle(st, world.switchPuzzle, { kind: 'switch' }), { sound: 'fanfare' });
             if (r?.ok) tutorial('puzzle');
             pressedRef.current = next;
           } else {
@@ -128,7 +134,7 @@ export function AdventureScreen() {
           break;
       }
     },
-    [apply, toast, tutorial],
+    [apply, toast, tutorial, world],
   );
 
   const onPickup = useCallback(
@@ -151,13 +157,14 @@ export function AdventureScreen() {
   }, [near, dialog, interact]);
   useKeyboard(doAction);
 
-  const prog = forestProgress(save);
+  const prog = forestProgress(save, world.id);
   const team = save.team.map((u) => getFriend(save, u)).filter((f) => !!f);
 
   return (
     <div className="screen play-screen">
-      <Stage camera={[0, 9, FOREST.spawn.z + 10.5]} fov={50}>
+      <Stage camera={[0, 9, world.spawn.z + 10.5]} fov={50}>
         <ForestScene
+          world={world}
           save={save}
           now={now}
           onNear={setNear}
@@ -194,12 +201,12 @@ export function AdventureScreen() {
           {f.text}
         </div>
       ))}
-      {dialog && <AdventureDialog dialog={dialog} setDialog={setDialog} onHome={() => { tutorial('returnHome'); go('home'); }} />}
+      {dialog && <AdventureDialog world={world} dialog={dialog} setDialog={setDialog} onHome={() => { tutorial('returnHome'); go('home'); }} />}
     </div>
   );
 }
 
-function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDialog: (d: Dialog | null) => void; onHome: () => void }) {
+function AdventureDialog({ world, dialog, setDialog, onHome }: { world: WorldMap; dialog: Dialog; setDialog: (d: Dialog | null) => void; onHome: () => void }) {
   const save = useSave();
   const apply = useGame((s) => s.apply);
   const tutorial = useGame((s) => s.tutorial);
@@ -265,7 +272,7 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       );
     }
     case 'encounter': {
-      const e = FOREST.encounters.find((x) => x.id === dialog.id)!;
+      const e = findEncounter(dialog.id)!;
       const sp = getSpecies(e.species);
       return (
         <Modal title={`${sp.name}と であった！`} onClose={close} closeLabel="またね" wide>
@@ -321,9 +328,17 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
       return (
         <Modal title="かんばん" onClose={close}>
           <p className="center" style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-            <span style={{ color: '#e4609e' }}>● ピンク</span> → <span style={{ color: '#b08a00' }}>● きいろ</span> → <span style={{ color: '#2f7fbf' }}>● みずいろ</span>
+            {world.switchOrder.map((id, i) => {
+              const sw = world.switches.find((w) => w.id === id)!;
+              return (
+                <span key={id}>
+                  {i > 0 && ' → '}
+                  <span style={{ color: SIGN_TEXT[sw.color] ?? sw.color }}>● {sw.name}</span>
+                </span>
+              );
+            })}
           </p>
-          <p className="center note">はなの スイッチを この じゅんばんで おしてね。まちがえても だいじょうぶ。</p>
+          <p className="center note">{world.id === 'sea' ? 'かいがらを この じゅんばんで ならしてね' : 'はなの スイッチを この じゅんばんで おしてね'}。まちがえても だいじょうぶ。</p>
         </Modal>
       );
     case 'portal':
@@ -337,9 +352,9 @@ function AdventureDialog({ dialog, setDialog, onHome }: { dialog: Dialog; setDia
         </Modal>
       );
     case 'menu': {
-      const prog = forestProgress(save);
+      const prog = forestProgress(save, world.id);
       return (
-        <Modal title="メニュー" onClose={close} closeLabel="▶ つづける">
+        <Modal title={`メニュー（${world.name}）`} onClose={close} closeLabel="▶ つづける">
           <div className="card">
             <div>🎁 たからばこ {prog.chests} / {prog.chestTotal}</div>
             <div>🧩 しかけ {prog.puzzles} / {prog.puzzleTotal}</div>

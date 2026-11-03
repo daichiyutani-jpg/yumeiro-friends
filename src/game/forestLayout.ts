@@ -1,5 +1,7 @@
 // さくらの森の 木・しげみ の配置と当たり判定。描画（three）と移動判定の両方で使う。
 import { FOREST } from './data/forest';
+import { getWorldMap } from './data/maps';
+import { seaLayout } from './seaLayout';
 
 export interface Circle {
   x: number;
@@ -127,11 +129,12 @@ export function forestLayout(): ForestLayout {
 }
 
 /** 円の当たり判定と 範囲の端で 押し戻す */
-export function resolveMove(x: number, z: number, radius: number, solved: readonly string[]): { x: number; z: number } {
-  const b = FOREST.bounds;
+export function resolveMove(x: number, z: number, radius: number, solved: readonly string[], worldId = 'sakura'): { x: number; z: number } {
+  const b = getWorldMap(worldId).bounds;
   let nx = Math.max(b.minX, Math.min(b.maxX, x));
   let nz = Math.max(b.minZ, Math.min(b.maxZ, z));
-  for (const c of forestLayout().colliders) {
+  const colliders = worldId === 'sea' ? seaLayout().colliders : forestLayout().colliders;
+  for (const c of colliders) {
     if (c.until && solved.includes(c.until)) continue;
     const dx = nx - c.x;
     const dz = nz - c.z;

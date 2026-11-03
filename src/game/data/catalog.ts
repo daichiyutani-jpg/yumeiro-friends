@@ -30,8 +30,10 @@ export const OUTFITS: OutfitDef[] = [
   { id: 'hat_ribbon', name: 'リボンの ぼうし', slot: 'hat', icon: '👒', color: '#fff1c9', color2: '#ff8fbf', shape: 'brim', price: 80, source: 'おみせ' },
   { id: 'hat_beret', name: 'ベレーぼう', slot: 'hat', icon: '🧢', color: '#b98cff', shape: 'beret', price: 80, source: 'おみせ' },
   { id: 'hat_flower', name: 'はなかんむり', slot: 'hat', icon: '💐', color: '#ff9ec7', color2: '#fff8a8', shape: 'wreath', craft: { petal: 5, clover: 1 }, source: 'アトリエで つくる' },
+  { id: 'hat_straw', name: 'むぎわらぼうし', slot: 'hat', icon: '👒', color: '#f6dc9c', color2: '#8fd3ff', shape: 'brim', source: 'うみの せかいの たからばこ' },
   // アクセサリー
   { id: 'acc_star', name: 'ほしの ネックレス', slot: 'accessory', icon: '⭐', color: '#ffd84d', shape: 'necklace', source: 'さくらの森の たからばこ' },
+  { id: 'acc_shell', name: 'かいがらの ネックレス', slot: 'accessory', icon: '🐚', color: '#ffd1e3', shape: 'necklace', source: 'うみの せかいの たからばこ' },
   { id: 'acc_bag', name: 'ハートの ポシェット', slot: 'accessory', icon: '👜', color: '#ff7fae', shape: 'bag', price: 110, source: 'おみせ' },
   { id: 'acc_wand', name: 'ゆめの ステッキ', slot: 'accessory', icon: '🪄', color: '#ffe066', color2: '#ff9ec7', shape: 'wand', craft: { star: 3, petal: 3 }, source: 'アトリエで つくる' },
   // ティアラ
@@ -130,8 +132,8 @@ export interface WorldDef {
 }
 export const WORLDS: WorldDef[] = [
   { id: 'sakura', name: 'さくらの森', icon: '🌸', implemented: true, unlockText: 'あそべるよ', color: '#ffd1e3' },
+  { id: 'sea', name: 'うみの せかい', icon: '🐚', implemented: true, unlockText: 'さくらの森で たからばこを 3こ あけると いけるよ', color: '#c9ecff' },
   { id: 'sweets', name: 'おかしの まち', icon: '🍰', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ffe8c9' },
-  { id: 'sea', name: 'うみの せかい', icon: '🐚', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#c9ecff' },
   { id: 'starisland', name: 'ほしぞらの しま', icon: '🌙', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ddd6ff' },
   { id: 'garden', name: 'はなの ていえん', icon: '🌷', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#ffe0ec' },
   { id: 'castle', name: 'プリンセスキャッスル', icon: '🏰', implemented: false, unlockText: 'じゅんびちゅう（まだ あそべません）', color: '#f3e0ff' },

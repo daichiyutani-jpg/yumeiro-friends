@@ -51,8 +51,37 @@ export interface ObstacleDef {
   until?: string;
 }
 
+export interface SwitchDef {
+  id: string;
+  color: string;
+  name: string;
+  x: number;
+  z: number;
+}
+
+/** ぼうけん先の マップに 共通する データ。ID は ワールドを またいで 重ならないように つける（セーブは 1つの 入れ物に まとめて 記録する） */
+export interface WorldMap {
+  id: string;
+  name: string;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  spawn: { x: number; z: number };
+  portal: { x: number; z: number };
+  chests: ChestDef[];
+  puzzles: PuzzleDef[];
+  switches: SwitchDef[];
+  switchOrder: string[];
+  /** スイッチを じゅんばんに おして とく しかけの ID */
+  switchPuzzle: string;
+  sign: { x: number; z: number };
+  encounters: EncounterDef[];
+  pickups: PickupDef[];
+  obstacles: ObstacleDef[];
+  pickupRespawnMs: number;
+}
+
 export const FOREST = {
   id: 'sakura',
+  name: 'さくらの森',
   bounds: { minX: -21, maxX: 22, minZ: -28, maxZ: 20 },
   spawn: { x: 0, z: 14 },
   portal: { x: 0, z: 17.5 },
@@ -108,6 +137,7 @@ export const FOREST = {
     { id: 'sw_blue', color: '#6fc4ff', name: 'みずいろ', x: 3.5, z: -22 },
   ],
   switchOrder: ['sw_pink', 'sw_yellow', 'sw_blue'],
+  switchPuzzle: 'p_switch',
   sign: { x: -2.2, z: -18.5 },
   encounters: [
     { id: 'e_bear', species: 'macaron', x: 8, z: 3, text: 'あまい においの くまが こっちを みているよ。' },

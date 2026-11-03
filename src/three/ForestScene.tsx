@@ -1,10 +1,12 @@
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { FOREST } from '../game/data/forest';
+import { FOREST, type WorldMap } from '../game/data/forest';
+import { SEA } from '../game/data/sea';
 import { getItem } from '../game/data/items';
 import { getSpecies } from '../game/data/species';
 import { forestLayout, resolveMove } from '../game/forestLayout';
+import { seaLayout } from '../game/seaLayout';
 import { isPickupAvailable } from '../game/logic/adventure';
 import type { SaveData } from '../game/types';
 import { readMove } from '../ui/Joystick';
@@ -26,30 +28,31 @@ const NEAR = 2.3;
 const SPEED = 5;
 const HERO_R = 0.3;
 
-export function forestInteractables(s: SaveData): Interactable[] {
-  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: FOREST.portal.x, z: FOREST.portal.z, label: '🌈 おうちへ かえる' }];
-  for (const c of FOREST.chests) {
+export function forestInteractables(s: SaveData, world: WorldMap = FOREST): Interactable[] {
+  const list: Interactable[] = [{ kind: 'portal', id: 'portal', x: world.portal.x, z: world.portal.z, label: '🌈 おうちへ かえる' }];
+  for (const c of world.chests) {
     if (s.forest.openedChests.includes(c.id)) continue;
     const locked = 'lockedBy' in c && c.lockedBy && !s.forest.solvedPuzzles.includes(c.lockedBy);
     if (locked) continue; // 謎を解くまでは見えない（puzzle の方を調べる）
     list.push({ kind: 'chest', id: c.id, x: c.x, z: c.z, label: '🎁 あける' });
   }
-  for (const p of FOREST.puzzles) {
+  for (const p of world.puzzles) {
     if (s.forest.solvedPuzzles.includes(p.id) || p.ability === null) continue;
     list.push({ kind: 'puzzle', id: p.id, x: p.x, z: p.z, label: '🔎 しらべる' });
   }
-  if (!s.forest.solvedPuzzles.includes('p_switch')) {
-    for (const sw of FOREST.switches) list.push({ kind: 'switch', id: sw.id, x: sw.x, z: sw.z, label: '🌼 おす' });
+  if (!s.forest.solvedPuzzles.includes(world.switchPuzzle)) {
+    const label = world.id === 'sea' ? '🐚 ならす' : '🌼 おす';
+    for (const sw of world.switches) list.push({ kind: 'switch', id: sw.id, x: sw.x, z: sw.z, label });
   }
-  list.push({ kind: 'sign', id: 'sign', x: FOREST.sign.x, z: FOREST.sign.z, label: '📜 よむ' });
-  for (const e of FOREST.encounters) {
+  list.push({ kind: 'sign', id: 'sign', x: world.sign.x, z: world.sign.z, label: '📜 よむ' });
+  for (const e of world.encounters) {
     if (s.forest.befriended.includes(e.id)) continue;
     list.push({ kind: 'encounter', id: e.id, x: e.x, z: e.z, label: '💬 はなす' });
   }
   return list;
 }
 
-function Instanced({ items, geometry, color, scale, y, colors }: { items: { x: number; z: number; s?: number }[]; geometry: THREE.BufferGeometry; color: string; scale: [number, number, number]; y: number; colors?: string[] }) {
+export function Instanced({ items, geometry, color, scale, y, colors }: { items: { x: number; z: number; s?: number }[]; geometry: THREE.BufferGeometry; color: string; scale: [number, number, number]; y: number; colors?: string[] }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const material = useMemo(() => new THREE.MeshLambertMaterial({ color: colors ? '#ffffff' : color }), [color, colors]);
   useLayoutEffect(() => {
@@ -178,6 +181,8 @@ function Chest({ x, z, open }: { x: number; z: number; open?: boolean }) {
 }
 
 export interface ForestSceneProps {
+  /** どの ワールドか（さくらの森・うみの せかい） */
+  world?: WorldMap;
   save: SaveData;
   now: number;
   onNear: (t: Interactable | null) => void;
@@ -191,7 +196,7 @@ export interface ForestSceneProps {
   paused: boolean;
 }
 
-export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, onMoved, pressedSwitches, heroPos, paused }: ForestSceneProps) {
+export function ForestScene({ world = FOREST, save, now, onNear, onInteract, onPickup, onSeen, onMoved, pressedSwitches, heroPos, paused }: ForestSceneProps) {
   const hero = useRef<THREE.Group>(null);
   const heroAnim = useRef<HeroAnim>('idle');
   const followers = useRef<(THREE.Group | null)[]>([]);
@@ -203,8 +208,8 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
   const seen = useRef(new Set<string>());
   const camera = useThree((s) => s.camera);
 
-  const interactables = useMemo(() => forestInteractables(save), [save]);
-  const pickups = useMemo(() => FOREST.pickups.filter((p) => isPickupAvailable(save, p.id, now)), [save, now]);
+  const interactables = useMemo(() => forestInteractables(save, world), [save, world]);
+  const pickups = useMemo(() => world.pickups.filter((p) => isPickupAvailable(save, p.id, now)), [save, now, world]);
   const solved = save.forest.solvedPuzzles;
   const team = save.team.map((uid) => save.friends.find((f) => f.uid === uid)).filter((f) => !!f);
 
@@ -254,7 +259,7 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
       const step = SPEED * Math.min(1, mag) * dt;
       const nx = h.position.x + (mx / Math.max(1, mag)) * step;
       const nz = h.position.z + (mz / Math.max(1, mag)) * step;
-      const r = resolveMove(nx, nz, HERO_R, L.solved);
+      const r = resolveMove(nx, nz, HERO_R, L.solved, world.id);
       const dist = Math.hypot(r.x - h.position.x, r.z - h.position.z);
       // 進めない時（木にぶつかり続ける時）は 自動移動をやめる
       if (dist < step * 0.1 && autoTarget.current) autoTarget.current = null;
@@ -299,7 +304,7 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
     const t = clock.elapsedTime;
     encounterRefs.current.forEach((g, i) => {
       if (!g) return;
-      const e = FOREST.encounters[i];
+      const e = world.encounters[i];
       g.position.x = e.x + Math.sin(t * 0.5 + i) * 0.8;
       g.position.z = e.z + Math.cos(t * 0.4 + i * 2) * 0.6;
       g.rotation.y = Math.atan2(h.position.x - g.position.x, h.position.z - g.position.z);
@@ -342,14 +347,26 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
 
   return (
     <>
-      <color attach="background" args={['#ffeef6']} />
-      <fog attach="fog" args={['#ffeef6', 22, 48]} />
-      <hemisphereLight args={['#fff6fb', '#b8e6b0', 2.2]} />
-      <directionalLight position={[6, 12, 8]} intensity={1.6} color="#fff4e0" />
-      <Scenery solved={solved} onGround={tapGround} />
-      <Petals target={heroPos} />
+      {world.id === 'sea' ? (
+        <>
+          <color attach="background" args={['#e3f6ff']} />
+          <fog attach="fog" args={['#e3f6ff', 24, 52]} />
+          <hemisphereLight args={['#ffffff', '#ffe9c4', 2.3]} />
+          <directionalLight position={[6, 12, 8]} intensity={1.7} color="#fff8e8" />
+          <SeaScenery solved={solved} onGround={tapGround} />
+        </>
+      ) : (
+        <>
+          <color attach="background" args={['#ffeef6']} />
+          <fog attach="fog" args={['#ffeef6', 22, 48]} />
+          <hemisphereLight args={['#fff6fb', '#b8e6b0', 2.2]} />
+          <directionalLight position={[6, 12, 8]} intensity={1.6} color="#fff4e0" />
+          <Scenery solved={solved} onGround={tapGround} />
+          <Petals target={heroPos} />
+        </>
+      )}
 
-      {FOREST.chests.map((c) => {
+      {world.chests.map((c) => {
         const visible = !('lockedBy' in c && c.lockedBy) || solved.includes(c.lockedBy);
         if (!visible) return null;
         const it = byId(c.id);
@@ -359,14 +376,22 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
           </group>
         );
       })}
-      {FOREST.puzzles.filter((p) => p.ability && !solved.includes(p.id)).map((p) => {
+      {world.puzzles.filter((p) => p.ability && !solved.includes(p.id)).map((p) => {
         const it = byId(p.id);
         return (
           <mesh key={p.id} geometry={geo.sphereLow} material={mat('#ffffff', { transparent: 0 })} position={[p.x, 1, p.z]} scale={1.4} onPointerDown={it ? tapTarget(it) : undefined} />
         );
       })}
-      {FOREST.switches.map((sw) => {
-        const on = solved.includes('p_switch') || pressedSwitches.includes(sw.id);
+      {world.switches.map((sw) => {
+        const on = solved.includes(world.switchPuzzle) || pressedSwitches.includes(sw.id);
+        if (world.id === 'sea') {
+          const it = byId(sw.id);
+          return (
+            <group key={sw.id} position={[sw.x, 0, sw.z]} onPointerDown={it ? tapTarget(it) : undefined}>
+              <SeaShell color={sw.color} on={on} />
+            </group>
+          );
+        }
         const it = byId(sw.id);
         return (
           <group key={sw.id} position={[sw.x, 0, sw.z]} onPointerDown={it ? tapTarget(it) : undefined}>
@@ -378,7 +403,7 @@ export function ForestScene({ save, now, onNear, onInteract, onPickup, onSeen, o
           </group>
         );
       })}
-      {FOREST.encounters.map((e, i) =>
+      {world.encounters.map((e, i) =>
         save.forest.befriended.includes(e.id) ? null : (
           <group key={e.id} ref={(g) => { encounterRefs.current[i] = g; }} position={[e.x, 0, e.z]} onPointerDown={byId(e.id) ? tapTarget(byId(e.id)!) : undefined}>
             <Creature look={getSpecies(e.species).look} anim="idle" />
@@ -415,5 +440,134 @@ function FollowerCreature({ speciesId, animRef, index }: { speciesId: string; an
     <group scale={0.85}>
       <Creature look={getSpecies(speciesId).look} animRef={anim} />
     </group>
+  );
+}
+
+/* ---------- うみの せかい ---------- */
+
+/** ならす かいがら（スイッチ） */
+function SeaShell({ color, on }: { color: string; on: boolean }) {
+  return (
+    <>
+      <mesh geometry={geo.sphereLow} material={mat(color, { emissive: on ? '#806040' : undefined })} position={[0, 0.25, 0]} scale={[0.75, on ? 0.2 : 0.35, 0.6]} />
+      {[-0.4, -0.2, 0, 0.2, 0.4].map((x) => (
+        <mesh key={x} geometry={geo.box} material={mat('#ffffff', { transparent: 0.6 })} position={[x, on ? 0.36 : 0.52, 0.05]} scale={[0.05, 0.08, 0.5]} rotation={[0, x, 0]} />
+      ))}
+      <mesh geometry={geo.circle} material={mat('#f1d9a8')} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} scale={1} />
+      {on && <Sparkles count={8} radius={0.6} height={1} color={color} />}
+    </>
+  );
+}
+
+function Palm({ x, z, s = 1 }: { x: number; z: number; s?: number }) {
+  return (
+    <group position={[x, 0, z]} scale={s}>
+      <mesh geometry={geo.cylinder} material={mat('#c9a07a')} position={[0, 1.3, 0]} scale={[0.16, 2.6, 0.16]} rotation={[0, 0, 0.12]} />
+      {[0, 1.26, 2.51, 3.77, 5.03].map((a) => (
+        <mesh key={a} geometry={geo.sphereLow} material={mat('#8fd9a8')} position={[0.15 + Math.cos(a) * 0.7, 2.6, Math.sin(a) * 0.7]} scale={[0.85, 0.12, 0.35]} rotation={[0, -a, -0.35]} />
+      ))}
+    </group>
+  );
+}
+
+function SeaScenery({ solved, onGround }: { solved: string[]; onGround: (e: ThreeEvent<PointerEvent>) => void }) {
+  const L = seaLayout();
+  const b = SEA.bounds;
+  const trunks = useMemo(() => L.palms.map((t) => ({ x: t.x, z: t.z, s: t.s })), [L]);
+  const leavesA = useMemo(() => L.palms.map((t) => ({ x: t.x + 0.6 * t.s, z: t.z, s: t.s })), [L]);
+  const leavesB = useMemo(() => L.palms.map((t) => ({ x: t.x - 0.5 * t.s, z: t.z + 0.4 * t.s, s: t.s })), [L]);
+  const leavesC = useMemo(() => L.palms.map((t) => ({ x: t.x, z: t.z - 0.6 * t.s, s: t.s })), [L]);
+  const leafTint = useMemo(() => L.palms.map((_, i) => ['#8fd9a8', '#a8e6b8', '#7ccf9a'][i % 3]), [L]);
+  const starColors = useMemo(() => L.starfish.map((f) => f.color), [L]);
+  const poolSolved = solved.includes('ps_pool');
+  const logSolved = solved.includes('ps_log');
+  const lightSolved = solved.includes('ps_light');
+  const islandSolved = solved.includes('ps_island');
+  const lh = SEA.lighthouse;
+  return (
+    <>
+      {/* すなはま（タップした場所へ歩く） */}
+      <mesh geometry={geo.plane} material={mat('#fbe9c4')} rotation={[-Math.PI / 2, 0, 0]} position={[(b.minX + b.maxX) / 2 + 8, 0, (b.minZ + b.maxZ) / 2]} scale={[70, 80, 1]} onPointerDown={onGround} />
+      <mesh geometry={geo.plane} material={mat('#fff6e0')} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -4]} scale={[2.4, 44, 1]} />
+      <mesh geometry={geo.plane} material={mat('#fff6e0')} rotation={[-Math.PI / 2, 0, 0]} position={[5.5, 0.02, 3]} scale={[11, 1.8, 1]} />
+      {/* うみ と なみうちぎわ */}
+      <mesh geometry={geo.plane} material={mat('#f1d9a8')} rotation={[-Math.PI / 2, 0, 0]} position={[-12, 0.015, -4]} scale={[3, 80, 1]} />
+      <mesh geometry={geo.plane} material={mat('#8fd3ff', { transparent: 0.92 })} rotation={[-Math.PI / 2, 0, 0]} position={[-47, 0.04, -4]} scale={[66, 90, 1]} />
+      <mesh geometry={geo.plane} material={mat('#ffffff', { transparent: 0.7 })} rotation={[-Math.PI / 2, 0, 0]} position={[-13.9, 0.05, -4]} scale={[0.6, 80, 1]} />
+      <Sparkles position={[-20, 0.2, -4]} count={24} radius={6} height={0.6} color="#ffffff" />
+
+      {/* ヤシの き・いわ・ほしの かい */}
+      <Instanced items={trunks} geometry={geo.cylinder} color="#c9a07a" scale={[0.16, 2.6, 0.16]} y={1.3} />
+      <Instanced items={leavesA} geometry={geo.sphereLow} color="#8fd9a8" scale={[0.9, 0.14, 0.4]} y={2.65} colors={leafTint} />
+      <Instanced items={leavesB} geometry={geo.sphereLow} color="#8fd9a8" scale={[0.8, 0.14, 0.4]} y={2.6} colors={leafTint} />
+      <Instanced items={leavesC} geometry={geo.sphereLow} color="#8fd9a8" scale={[0.4, 0.14, 0.85]} y={2.62} colors={leafTint} />
+      <Instanced items={L.rocks} geometry={geo.dodeca} color="#e3d6c4" scale={[1, 0.7, 1]} y={0.2} />
+      <Instanced items={L.wall} geometry={geo.dodeca} color="#cfc0b0" scale={[1, 1.1, 1]} y={0.45} />
+      <Instanced items={L.starfish} geometry={geo.sphereLow} color="#fff" scale={[0.12, 0.05, 0.12]} y={0.05} colors={starColors} />
+
+      {/* ビーチパラソル（かざり） */}
+      {SEA.parasols.map(({ x, z, color: c }) => (
+        <group key={x} position={[x, 0, z]}>
+          <mesh geometry={geo.cylinder} material={mat('#ffffff')} position={[0, 0.9, 0]} scale={[0.05, 1.8, 0.05]} />
+          <mesh geometry={geo.cone} material={mat(c)} position={[0, 1.95, 0]} scale={[1.3, 0.5, 1.3]} />
+        </group>
+      ))}
+
+      {/* しおだまり */}
+      <group position={[-8, 0, 3]}>
+        <mesh geometry={geo.circle} material={mat('#a8e4ff')} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} scale={1.3} />
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <mesh key={i} geometry={geo.dodeca} material={mat('#e3d6c4')} position={[Math.cos(i * 0.9) * 1.45, 0.12, Math.sin(i * 0.9) * 1.45]} scale={0.28} />
+        ))}
+        {!poolSolved && (
+          <>
+            <Sparkles position={[0, 0.1, 0]} count={12} radius={0.5} height={0.6} color="#bff0ff" />
+            <EmojiSprite emoji="💧" bg="#ffffffcc" position={[0, 2, 0]} size={0.7} />
+          </>
+        )}
+      </group>
+
+      {/* おおきな ながれぎ（いりえの いりぐち） */}
+      <mesh geometry={geo.cylinder} material={mat('#b08a68')} position={logSolved ? [10.2, 0.35, 6] : [12, 0.45, 3]} scale={[0.45, 2.8, 0.45]} rotation={logSolved ? [Math.PI / 2, 0, 0.6] : [Math.PI / 2, 0, 0]} />
+      {!logSolved && <EmojiSprite emoji="💪" bg="#ffffffcc" position={[12, 2.4, 3]} size={0.7} />}
+      {logSolved && <mesh geometry={geo.plane} material={mat('#fff6e0')} rotation={[-Math.PI / 2, 0, 0]} position={[15.5, 0.02, 3]} scale={[7, 1.6, 1]} />}
+      <Palm x={18.5} z={5.5} />
+
+      {/* とうだい */}
+      <group position={[lh.x, 0, lh.z]}>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} geometry={geo.cylinder} material={mat(i % 2 ? '#ff9ec7' : '#ffffff')} position={[0, 0.6 + i * 1.2, 0]} scale={[1.3 - i * 0.12, 1.2, 1.3 - i * 0.12]} />
+        ))}
+        <mesh geometry={geo.sphereLow} material={mat(lightSolved ? '#fff3a8' : '#bdb6cc', { emissive: lightSolved ? '#a08020' : undefined })} position={[0, 5.3, 0]} scale={0.7} />
+        <mesh geometry={geo.cone} material={mat('#8fd3ff')} position={[0, 6.2, 0]} scale={[1, 0.9, 1]} />
+        <mesh geometry={geo.box} material={mat('#c99b74')} position={[0, 0.7, 1.25]} scale={[0.7, 1.2, 0.1]} />
+        {!lightSolved && <EmojiSprite emoji="✨" bg="#ffffffcc" position={[0, 7.4, 0]} size={0.7} />}
+        {lightSolved && <pointLight position={[0, 5.3, 1.5]} color="#ffe9a8" intensity={8} distance={9} />}
+      </group>
+
+      {/* はなれじま */}
+      <group position={[SEA.island.x, 0, SEA.island.z]}>
+        <mesh geometry={geo.sphereLow} material={mat('#fbe9c4')} position={[0, -0.3, 0]} scale={[3, 0.8, 2.6]} />
+        <Palm x={0.6} z={-0.4} s={1.1} />
+        {!islandSolved && <Sparkles position={[-0.6, 0.6, 0.6]} count={10} radius={0.4} height={0.6} color="#fff3a0" />}
+      </group>
+      {!islandSolved && <EmojiSprite emoji="🪽" bg="#ffffffcc" position={[-11.4, 2, -11]} size={0.7} />}
+
+      {/* かいがらの かんばん */}
+      <group position={[SEA.sign.x, 0, SEA.sign.z]}>
+        <mesh geometry={geo.cylinder} material={mat('#c99b74')} position={[0, 0.5, 0]} scale={[0.08, 1, 0.08]} />
+        <mesh geometry={geo.box} material={mat('#e9f8ff')} position={[0, 1.1, 0]} scale={[1.2, 0.6, 0.08]} />
+        {SEA.switchOrder.map((id, i) => (
+          <mesh key={id} geometry={geo.circle} material={mat(SEA.switches.find((w) => w.id === id)!.color)} position={[-0.35 + i * 0.35, 1.1, 0.05]} scale={0.12} />
+        ))}
+      </group>
+      {/* にじの ゲート（おうちへ かえる） */}
+      <group position={[SEA.portal.x, 0, SEA.portal.z]}>
+        {['#ff9ec7', '#ffd84d', '#a8ead2', '#8fd3ff', '#cdb8ff'].map((c, i) => (
+          <mesh key={c} geometry={geo.torus} material={mat(c)} position={[0, 0, 0]} scale={[1.9 - i * 0.18, 1.9 - i * 0.18, 0.5]} />
+        ))}
+        <Sparkles count={14} radius={0.9} height={2} color="#ffffff" />
+      </group>
+    </>
   );
 }

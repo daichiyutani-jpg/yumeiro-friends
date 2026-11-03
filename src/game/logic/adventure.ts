@@ -1,5 +1,7 @@
-// 冒険（さくらの森）のロジック: 宝箱・謎解き・出会い・落とし物
-import { FOREST, type PuzzleDef } from '../data/forest';
+// 冒険（さくらの森・うみの せかい）のロジック: 宝箱・謎解き・出会い・落とし物
+// 進みぐあいは ワールドを またいで s.forest に まとめて 記録する（ID が ワールドごとに ちがうので まざらない）
+import { FOREST, type PuzzleDef, type WorldMap } from '../data/forest';
+import { findChest, findEncounter, findPickup, findPuzzle, getWorldMap } from '../data/maps';
 import { ABILITY_INFO, getSpecies } from '../data/species';
 import type { Result, SaveData } from '../types';
 import { addItemsMut, clone, fail, hasItems, ok, removeItemsMut } from './core';
@@ -10,7 +12,7 @@ export function isSolved(s: SaveData, puzzleId: string): boolean {
 }
 
 export function getPuzzle(id: string): PuzzleDef | undefined {
-  return FOREST.puzzles.find((p) => p.id === id);
+  return findPuzzle(id);
 }
 
 /** チームに仲良し度50以上の仲間がいると、宝箱のコインが少し増える */
@@ -19,7 +21,7 @@ export function chestCoinBonus(s: SaveData): number {
 }
 
 export function openChest(state: SaveData, chestId: string): Result {
-  const chest = FOREST.chests.find((c) => c.id === chestId);
+  const chest = findChest(chestId);
   if (!chest) return fail('たからばこが みつからないよ');
   if (state.forest.openedChests.includes(chestId)) return fail('もう あけた たからばこだよ');
   if ('lockedBy' in chest && chest.lockedBy && !isSolved(state, chest.lockedBy)) {
@@ -77,14 +79,14 @@ export function solvePuzzle(state: SaveData, puzzleId: string, method: PuzzleMet
 }
 
 /** スイッチの押した順番が正しいか。まちがえても ペナルティは ない */
-export function checkSwitchOrder(pressed: string[]): 'ok' | 'continue' | 'wrong' {
-  const order = FOREST.switchOrder;
+export function checkSwitchOrder(pressed: string[], map: WorldMap = FOREST): 'ok' | 'continue' | 'wrong' {
+  const order = map.switchOrder;
   for (let i = 0; i < pressed.length; i++) if (pressed[i] !== order[i]) return 'wrong';
   return pressed.length === order.length ? 'ok' : 'continue';
 }
 
 export function befriend(state: SaveData, encounterId: string): Result {
-  const e = FOREST.encounters.find((x) => x.id === encounterId);
+  const e = findEncounter(encounterId);
   if (!e) return fail('だれも いないよ');
   if (state.forest.befriended.includes(encounterId)) return fail('もう なかまに なっているよ');
   const s = clone(state);
@@ -95,7 +97,7 @@ export function befriend(state: SaveData, encounterId: string): Result {
 }
 
 export function seeEncounter(state: SaveData, encounterId: string): SaveData {
-  const e = FOREST.encounters.find((x) => x.id === encounterId);
+  const e = findEncounter(encounterId);
   if (!e || state.dex[e.species]) return state;
   const s = clone(state);
   markDex(s, e.species, 'seen');
@@ -104,11 +106,12 @@ export function seeEncounter(state: SaveData, encounterId: string): SaveData {
 
 export function isPickupAvailable(s: SaveData, pickupId: string, now: number): boolean {
   const t = s.forest.picked[pickupId];
-  return t === undefined || now - t >= FOREST.pickupRespawnMs || now < t;
+  const respawn = findPickup(pickupId)?.map.pickupRespawnMs ?? FOREST.pickupRespawnMs;
+  return t === undefined || now - t >= respawn || now < t;
 }
 
 export function pickUp(state: SaveData, pickupId: string, now: number): Result {
-  const pk = FOREST.pickups.find((p) => p.id === pickupId);
+  const pk = findPickup(pickupId)?.pickup;
   if (!pk) return fail('なにも ないよ');
   if (!isPickupAvailable(state, pickupId, now)) return fail('また あとで はえてくるよ');
   const s = clone(state);
@@ -117,15 +120,25 @@ export function pickUp(state: SaveData, pickupId: string, now: number): Result {
   return ok(s, undefined, { [pk.item]: pk.count });
 }
 
-export function forestProgress(s: SaveData): { chests: number; chestTotal: number; puzzles: number; puzzleTotal: number; friends: number; friendTotal: number } {
+/** その ワールドの 進みぐあい（ほかの ワールドの ぶんは かぞえない） */
+export function forestProgress(s: SaveData, worldId = 'sakura'): { chests: number; chestTotal: number; puzzles: number; puzzleTotal: number; friends: number; friendTotal: number } {
+  const m = getWorldMap(worldId);
   return {
-    chests: s.forest.openedChests.length,
-    chestTotal: FOREST.chests.length,
-    puzzles: s.forest.solvedPuzzles.length,
-    puzzleTotal: FOREST.puzzles.length,
-    friends: s.forest.befriended.length,
-    friendTotal: FOREST.encounters.length,
+    chests: m.chests.filter((c) => s.forest.openedChests.includes(c.id)).length,
+    chestTotal: m.chests.length,
+    puzzles: m.puzzles.filter((p) => s.forest.solvedPuzzles.includes(p.id)).length,
+    puzzleTotal: m.puzzles.length,
+    friends: m.encounters.filter((e) => s.forest.befriended.includes(e.id)).length,
+    friendTotal: m.encounters.length,
   };
+}
+
+/** うみの せかいは さくらの森で たからばこを 3こ あけると いける */
+export const SEA_UNLOCK_CHESTS = 3;
+export function isWorldUnlocked(s: SaveData, worldId: string): boolean {
+  if (worldId === 'sakura') return true;
+  if (worldId === 'sea') return forestProgress(s, 'sakura').chests >= SEA_UNLOCK_CHESTS;
+  return false;
 }
 
 export function enterForest(state: SaveData): SaveData {
