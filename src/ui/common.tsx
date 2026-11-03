@@ -233,26 +233,57 @@ export function CreatureIcon({ look, size = 64, silhouette = false }: { look: Cr
   const c = silhouette ? '#cfc2dd' : look.body;
   const a = silhouette ? '#cfc2dd' : look.accent;
   const b = silhouette ? '#cfc2dd' : look.belly;
+  // 進化した姿は せが のびて（あたまが うえ）、みみが おおきく、えりかざり・しっぽ・ひたいの しるしが つく
+  const evo = look.stage === 2;
+  const hy = evo ? 46 : 52;
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-      {EAR_PATHS[look.ears](c, a)}
-      <ellipse cx="50" cy="82" rx="26" ry="16" fill={c} />
-      <circle cx="50" cy="52" r="30" fill={c} />
-      {!silhouette && (
+    <svg width={size} height={size} viewBox={evo ? '-6 -14 112 114' : '0 0 100 100'} aria-hidden="true">
+      {evo && look.extra === 'wings' && !silhouette && (
         <>
+          <path d="M30 70 Q2 46 6 30 Q22 44 34 60 Z" fill="#fff" stroke={a} strokeWidth="2" />
+          <path d="M70 70 Q98 46 94 30 Q78 44 66 60 Z" fill="#fff" stroke={a} strokeWidth="2" />
+        </>
+      )}
+      {evo && look.tail !== 'none' && look.tail !== 'spiky' && (
+        <>
+          <circle cx="80" cy="78" r="10" fill={c} />
+          <circle cx="88" cy="64" r="8" fill={b} />
+          <circle cx="90" cy="51" r="6" fill={a} />
+        </>
+      )}
+      <g transform={evo ? `translate(50 ${hy - 10}) scale(1.25) translate(-50 -42)` : `translate(0 ${hy - 52})`}>{EAR_PATHS[look.ears](c, a)}</g>
+      {evo && look.ears === 'none' && <path d={`M38 ${hy - 22} L42 ${hy - 40} L47 ${hy - 26} L50 ${hy - 46} L53 ${hy - 26} L58 ${hy - 40} L62 ${hy - 22} Z`} fill={a} />}
+      <ellipse cx="50" cy={evo ? 80 : 82} rx={evo ? 24 : 26} ry={evo ? 19 : 16} fill={c} />
+      {evo && !silhouette && [-3, -2, -1, 0, 1, 2, 3].map((i) => <circle key={i} cx={50 + i * 8.5} cy={71 + Math.abs(i) * 1.5} r="6.5" fill={i % 2 ? b : a} />)}
+      <circle cx="50" cy={hy} r="30" fill={c} />
+      {!silhouette && (
+        <g transform={`translate(0 ${hy - 52})`}>
           <ellipse cx="50" cy="62" rx="15" ry="10" fill={b} />
           <ellipse cx="39" cy="52" rx="4" ry="5.5" fill="#3a2a4a" />
           <ellipse cx="61" cy="52" rx="4" ry="5.5" fill="#3a2a4a" />
+          {evo && (
+            <>
+              <ellipse cx="39" cy="53.5" rx="2.6" ry="3.2" fill={a} />
+              <ellipse cx="61" cy="53.5" rx="2.6" ry="3.2" fill={a} />
+            </>
+          )}
           <circle cx="40.5" cy="50" r="1.6" fill="#fff" />
           <circle cx="62.5" cy="50" r="1.6" fill="#fff" />
           <ellipse cx="31" cy="61" rx="5" ry="3" fill="#ffa5c4" />
           <ellipse cx="69" cy="61" rx="5" ry="3" fill="#ffa5c4" />
           <ellipse cx="50" cy="59" rx="2.5" ry="1.8" fill="#7a4a5a" />
+          {evo && <path d="M50 30 L53 37 L50 44 L47 37 Z" fill={a} stroke="#fff" strokeWidth="1" />}
           <text x="70" y="34" fontSize="18">{MOTIF_ICON[look.motif]}</text>
-          {look.extra === 'crown' && <text x="38" y="26" fontSize="20">👑</text>}
-          {look.extra === 'halo' && <ellipse cx="50" cy="18" rx="16" ry="4" fill="none" stroke="#ffe066" strokeWidth="3" />}
-          {look.extra === 'wings' && <text x="2" y="70" fontSize="18">🪽</text>}
-          {look.extra === 'cape' && <path d="M26 74 Q50 98 74 74 L70 92 Q50 100 30 92 Z" fill={a} opacity=".8" />}
+          {look.extra === 'crown' && <text x={evo ? 36 : 38} y="26" fontSize={evo ? 24 : 20}>👑</text>}
+          {look.extra === 'halo' && <ellipse cx="50" cy={evo ? 14 : 18} rx={evo ? 20 : 16} ry="4.5" fill="none" stroke="#ffe066" strokeWidth={evo ? 4 : 3} />}
+          {look.extra === 'wings' && !evo && <text x="2" y="70" fontSize="18">🪽</text>}
+        </g>
+      )}
+      {!silhouette && look.extra === 'cape' && <path d="M26 74 Q50 98 74 74 L70 92 Q50 100 30 92 Z" fill={a} opacity=".8" />}
+      {evo && !silhouette && (
+        <>
+          <text x="2" y="22" fontSize="13">✨</text>
+          <text x="2" y="96" fontSize="11">✨</text>
         </>
       )}
       {silhouette && <text x="42" y="60" fontSize="20" fill="#fff" fontWeight="bold">?</text>}

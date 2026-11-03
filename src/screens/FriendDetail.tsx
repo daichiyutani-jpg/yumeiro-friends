@@ -8,7 +8,7 @@ import {
 import { toggleHelper } from '../game/logic/life';
 import type { CareKind } from '../game/types';
 import { useGame } from '../state/store';
-import { Creature, type CreatureAnim } from '../three/Creature';
+import { Creature, portraitCamera, type CreatureAnim } from '../three/Creature';
 import { Sparkles } from '../three/Effects';
 import { Stage } from '../three/Stage';
 import { Confirm, CostList, CreatureIcon, Modal, Paged, Screen, useNow, useSave } from '../ui/common';
@@ -86,7 +86,7 @@ export function FriendDetailScreen() {
       side={
         <>
           <div className="stage">
-            <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
+            <Stage key={sp.look.stage ?? 1} {...portraitCamera(sp.look)} fov={40}>
               <color attach="background" args={['#fff4fa']} />
               <hemisphereLight args={['#ffffff', '#e0f0ff', 2.5]} />
               <directionalLight position={[2, 4, 4]} intensity={1.3} />
@@ -277,7 +277,7 @@ export function FriendDetailScreen() {
       {evolved && (
         <Modal title="しんか した！" onClose={() => setEvolved(null)} closeLabel="すごい！">
           <div className="modal-stage">
-            <Stage camera={[0, 1.1, 3]} target={[0, 0.6, 0]} fov={40}>
+            <Stage {...portraitCamera(getSpecies(evolved).look)} fov={40}>
               <color attach="background" args={['#fff1f8']} />
               <hemisphereLight args={['#ffffff', '#ffe0ee', 2.5]} />
               <directionalLight position={[2, 4, 4]} intensity={1.2} />

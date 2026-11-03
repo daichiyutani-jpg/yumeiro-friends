@@ -17,6 +17,8 @@ export interface CreatureLook {
   motif: 'flower' | 'star' | 'candy' | 'bubble' | 'cloud' | 'gem' | 'leaf' | 'moon' | 'ribbon' | 'rainbow' | 'snow' | 'magic';
   /** 進化した姿の飾り */
   extra?: 'crown' | 'wings' | 'halo' | 'cape';
+  /** 2 = 進化した姿（せが のび、えりかざり・おおきな しっぽ・ひたいの しるし・ひかりの つぶ が つく）。species.ts で 進化先に 自動で つける */
+  stage?: 2;
   scale?: number;
 }
 

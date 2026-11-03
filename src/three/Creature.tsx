@@ -97,6 +97,7 @@ function Ears({ look }: { look: CreatureLook }) {
 
 function Tail({ look }: { look: CreatureLook }) {
   const { body, accent, belly } = look;
+  if (look.stage === 2 && (look.tail === 'puff' || look.tail === 'thin' || look.tail === 'fluffy')) return <GrandTail look={look} />;
   switch (look.tail) {
     case 'puff':
       return <Part g={geo.sphere} color={belly} p={[0, 0.3, -0.33]} s={0.11} />;
@@ -190,31 +191,154 @@ function Motif({ look }: { look: CreatureLook }) {
   }
 }
 
-function Extra({ look }: { look: CreatureLook }) {
+// ---------- 進化した姿（stage 2）だけの パーツ ----------
+
+/** モチーフごとの ちいさな しるし（ひたい・しっぽの さき・ひかりの つぶ に使う） */
+function Emblem({ look, p, s, r }: { look: CreatureLook; p: V3; s: number; r?: V3 }) {
+  const a = look.accent;
+  switch (look.motif) {
+    case 'flower':
+    case 'leaf':
+      return (
+        <group position={p} rotation={r} scale={s}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Part key={i} g={geo.sphere} color={look.motif === 'leaf' ? '#8ed68e' : a} p={[Math.cos((i / 5) * Math.PI * 2) * 0.9, Math.sin((i / 5) * Math.PI * 2) * 0.9, 0]} s={[0.6, 0.6, 0.3]} />
+          ))}
+          <Part g={geo.sphere} color="#fff3a0" p={[0, 0, 0.2]} s={0.5} emissive="#6a5a10" />
+        </group>
+      );
+    case 'star':
+    case 'moon':
+    case 'magic':
+      return <Part g={geo.star} color={a} p={p} r={r} s={s * 1.4} emissive="#7a5a00" />;
+    case 'gem':
+    case 'snow':
+    case 'bubble':
+      return <Part g={geo.octa} color={a} p={p} r={r} s={[s, s * 1.4, s * 0.7]} emissive="#204050" />;
+    default:
+      return <Part g={geo.heart} color={a} p={p} r={r} s={s * 1.2} emissive="#5a1030" />;
+  }
+}
+
+/** くびの まわりの えりかざり。はな系は はなびら、ほし・ほうせき系は とがった かざり、ほかは ふわふわの フリル */
+function Ruff({ look, y }: { look: CreatureLook; y: number }) {
+  const { accent, belly } = look;
+  const kind = look.motif === 'flower' || look.motif === 'leaf' ? 'petal' : ['star', 'gem', 'snow', 'moon', 'magic'].includes(look.motif) ? 'spike' : 'frill';
+  const n = 11;
+  return (
+    <group position={[0, y, -0.02]}>
+      {Array.from({ length: n }, (_, i) => {
+        // うしろ（-z）は かくれるので まえ がわ 3/4 しゅう に ならべる
+        const ang = -Math.PI * 0.78 + (i / (n - 1)) * Math.PI * 1.56;
+        const x = Math.sin(ang) * 0.3;
+        const z = Math.cos(ang) * 0.27;
+        const c = i % 2 === 0 ? accent : look.motif === 'leaf' ? '#8ed68e' : belly;
+        if (kind === 'petal') return <Part key={i} g={geo.sphere} color={c} p={[x, 0, z]} s={[0.085, 0.045, 0.13]} r={[0.5, ang, 0]} />;
+        if (kind === 'spike') return <Part key={i} g={geo.cone} color={c} p={[x * 1.05, -0.02, z * 1.05]} s={[0.05, 0.16, 0.05]} r={[Math.cos(ang) * 1.9, 0, -Math.sin(ang) * 1.9]} emissive={i % 2 === 0 ? '#2a2040' : undefined} />;
+        return <Part key={i} g={geo.sphere} color={c} p={[x, -0.01, z]} s={[0.075, 0.07, 0.07]} />;
+      })}
+    </group>
+  );
+}
+
+/** おおきく なった しっぽ（4だんの ふさ ＋ さきに しるし） */
+function GrandTail({ look }: { look: CreatureLook }) {
+  const { body, accent, belly } = look;
+  const seg: [V3, number, string][] = [
+    [[0, 0.32, -0.36], 0.14, body],
+    [[0, 0.52, -0.5], 0.16, belly],
+    [[0, 0.76, -0.56], 0.15, body],
+    [[0, 0.96, -0.5], 0.11, accent],
+  ];
+  return (
+    <>
+      {seg.map(([p, s, c], i) => (
+        <Part key={i} g={geo.sphere} color={c} p={p} s={[s, s * 1.05, s]} />
+      ))}
+      <Emblem look={look} p={[0, 1.1, -0.44]} s={0.06} />
+    </>
+  );
+}
+
+/** まわりを ふわふわ まわる ひかりの つぶ */
+function Aura({ look }: { look: CreatureLook }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = ref.current;
+    if (!g) return;
+    g.rotation.y = clock.elapsedTime * 0.9;
+    g.children.forEach((c, i) => (c.position.y = 0.55 + i * 0.22 + Math.sin(clock.elapsedTime * 2 + i * 1.7) * 0.06));
+  });
+  return (
+    <group ref={ref}>
+      {[0, 1, 2, 3].map((i) => (
+        <group key={i} position={[Math.cos((i / 4) * Math.PI * 2) * 0.62, 0.6, Math.sin((i / 4) * Math.PI * 2) * 0.62]}>
+          {i % 2 === 0 ? <Emblem look={look} p={[0, 0, 0]} s={0.035} /> : <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#fff3c0' })} scale={0.028} />}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** はねは 3まいの はねを かさね、ゆっくり はばたく */
+function Wings({ look, y }: { look: CreatureLook; y: number }) {
+  const l = useRef<THREE.Group>(null);
+  const r = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const f = Math.sin(clock.elapsedTime * 3) * 0.2;
+    if (l.current) l.current.rotation.y = 0.15 + f;
+    if (r.current) r.current.rotation.y = -0.15 - f;
+  });
+  // まえから みても からだの よこに はみだして 見える ように ひろげる
+  return (
+    <>
+      {[-1, 1].map((d) => (
+        <group key={d} ref={d < 0 ? l : r} position={[d * 0.2, y, -0.2]}>
+          {[0, 1, 2].map((i) => (
+            <Part key={i} g={geo.sphere} color={i === 2 ? look.accent : '#ffffff'} p={[d * (0.34 + i * 0.02), 0.16 - i * 0.13, -0.02 * i]} s={[0.32 - i * 0.06, 0.11, 0.035]} r={[0, 0, d * (0.6 - i * 0.45)]} opacity={0.92} />
+          ))}
+        </group>
+      ))}
+    </>
+  );
+}
+
+function Extra({ look, lift }: { look: CreatureLook; lift: number }) {
   const a = look.accent;
   switch (look.extra) {
     case 'crown':
       return (
-        <group position={[0, 1.2, 0]}>
-          <Part g={geo.cylinder} color="#ffd84d" p={[0, 0, 0]} s={[0.13, 0.06, 0.13]} />
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Part key={i} g={geo.cone} color="#ffd84d" p={[Math.cos((i / 5) * Math.PI * 2) * 0.11, 0.07, Math.sin((i / 5) * Math.PI * 2) * 0.11]} s={[0.03, 0.08, 0.03]} />
+        <group position={[0, 1.2 + lift, 0]}>
+          <Part g={geo.cylinder} color="#ffd84d" k="satin" p={[0, 0, 0]} s={[0.15, 0.08, 0.15]} />
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+            <group key={i} position={[Math.cos((i / 7) * Math.PI * 2) * 0.13, 0.1, Math.sin((i / 7) * Math.PI * 2) * 0.13]}>
+              <Part g={geo.cone} color="#ffd84d" k="satin" p={[0, 0, 0]} s={[0.035, 0.14, 0.035]} />
+              <Part g={geo.sphere} color={i % 2 ? '#ffffff' : a} p={[0, 0.08, 0]} s={0.022} emissive="#303030" />
+            </group>
           ))}
-          <Part g={geo.sphere} color={a} p={[0, 0.02, 0.13]} s={0.03} />
+          <Part g={geo.octa} color={a} p={[0, 0.02, 0.15]} s={[0.035, 0.05, 0.02]} emissive="#402030" />
         </group>
       );
     case 'wings':
-      return (
-        <>
-          {[-1, 1].map((d) => (
-            <Part key={d} g={geo.sphere} color="#ffffff" p={[d * 0.32, 0.55, -0.2]} s={[0.22, 0.12, 0.04]} r={[0, d * 0.5, d * 0.5]} opacity={0.85} />
-          ))}
-        </>
-      );
+      return <Wings look={look} y={0.55 + lift * 0.5} />;
     case 'halo':
-      return <Part g={geo.torus} color="#fff3a0" p={[0, 1.38, 0]} s={[0.18, 0.18, 0.18]} r={[Math.PI / 2, 0, 0]} emissive="#8a7a20" />;
+      return (
+        <group position={[0, 1.42 + lift, 0]} rotation={[Math.PI / 2 - 0.25, 0, 0]}>
+          <Part g={geo.torus} color="#fff3a0" p={[0, 0, 0]} s={0.22} emissive="#a08a20" />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <Part key={i} g={geo.sphere} color={a} p={[Math.cos((i / 6) * Math.PI * 2) * 0.22, Math.sin((i / 6) * Math.PI * 2) * 0.22, 0]} s={0.03} emissive="#504020" />
+          ))}
+        </group>
+      );
     case 'cape':
-      return <Part g={geo.cone} color={a} p={[0, 0.45, -0.15]} s={[0.36, 0.55, 0.2]} />;
+      return (
+        <group position={[0, lift * 0.5, 0]}>
+          <Part g={geo.cone} color={a} k="satin" p={[0, 0.42, -0.2]} s={[0.42, 0.75, 0.22]} />
+          {[-1, 1].map((d) => (
+            <Part key={d} g={geo.sphere} color="#ffd84d" k="satin" p={[d * 0.16, 0.74, 0.12]} s={0.04} />
+          ))}
+        </group>
+      );
     default:
       return null;
   }
@@ -231,15 +355,27 @@ function muzzleZ(x: number, y: number): number {
 }
 
 export function CreatureModel({ look }: { look: CreatureLook }) {
-  const { body, belly } = look;
+  const { body, belly, accent } = look;
+  const evo = look.stage === 2;
+  // 進化すると せが のびる（からだが たてに ながく、あたまが うえに）
+  const lift = evo ? 0.13 : 0;
   return (
-    <group scale={look.scale ?? 1}>
+    <group scale={(look.scale ?? 1) * (evo ? 1.06 : 1)}>
       {/* からだ と むねの ふわふわ */}
-      <Part g={geo.sphere} color={body} p={[0, 0.36, 0]} s={[0.34, 0.33, 0.3]} />
-      <Part g={geo.sphere} color={belly} p={[0, 0.34, 0.14]} s={[0.22, 0.22, 0.18]} />
+      <Part g={geo.sphere} color={body} p={[0, 0.36 + lift * 0.6, 0]} s={[0.34, 0.33 + lift * 0.6, 0.3]} />
+      <Part g={geo.sphere} color={belly} p={[0, 0.34 + lift * 0.6, 0.14]} s={[0.22, 0.22 + lift * 0.5, 0.18]} />
       {[-2, -1, 0, 1, 2].map((i) => (
-        <Part key={`fl${i}`} g={geo.sphere} color={belly} p={[i * 0.055, 0.6 - Math.abs(i) * 0.025, 0.2 - Math.abs(i) * 0.02]} s={[0.06, 0.055, 0.045]} />
+        <Part key={`fl${i}`} g={geo.sphere} color={belly} p={[i * 0.055, 0.6 + lift - Math.abs(i) * 0.025, 0.2 - Math.abs(i) * 0.02]} s={[0.06, 0.055, 0.045]} />
       ))}
+      {evo && (
+        <>
+          {/* むねの しるしと、せなかの もよう */}
+          <Part g={geo.heart} color={accent} p={[0, 0.4, 0.32]} s={0.05} />
+          {[-1, 0, 1].map((i) => (
+            <Part key={`sp${i}`} g={geo.sphere} color={accent} p={[i * 0.17, 0.52 - Math.abs(i) * 0.08, -0.27 + Math.abs(i) * 0.05]} s={[0.06, 0.05, 0.02]} r={[0, i * 0.6, 0]} />
+          ))}
+        </>
+      )}
       {/* あし（ゆびの ふくらみ つき） */}
       {[-1, 1].map((d) => (
         <group key={d} position={[d * 0.15, 0.07, 0.08]}>
@@ -251,41 +387,64 @@ export function CreatureModel({ look }: { look: CreatureLook }) {
       ))}
       {/* うで（さきに あかるい にくきゅう いろ） */}
       {[-1, 1].map((d) => (
-        <group key={`a${d}`} position={[d * 0.3, 0.38, 0.08]} rotation={[0.2, 0, d * 0.25]}>
+        <group key={`a${d}`} position={[d * 0.3, 0.38 + lift * 0.8, 0.08]} rotation={[0.2, 0, d * 0.25]}>
           <Part g={geo.sphere} color={body} p={[0, 0, 0]} s={[0.07, 0.11, 0.07]} />
           <Part g={geo.sphere} color={belly} p={[0, -0.075, 0.025]} s={[0.04, 0.03, 0.035]} />
         </group>
       ))}
-      {/* あたま と あたまの うえの くせっ毛 */}
-      <Part g={geo.sphere} color={body} p={[0, HEAD.y, 0]} s={[HEAD.rx, HEAD.ry, HEAD.rz]} />
-      <Part g={geo.sphere} color={belly} p={[0, MUZZLE.y, MUZZLE.z]} s={[MUZZLE.rx, MUZZLE.ry, MUZZLE.rz]} />
-      {[-1, 1].map((d) => (
-        <Part key={`tuft${d}`} g={cgeo.capsule} color={body} p={[d * 0.035, 1.2, 0.1]} s={[0.05, 0.08, 0.04]} r={[0.4, 0, -d * 0.6]} />
-      ))}
-      {/* め：くろめ → ひとみの いろ → どうこう → ひかり 2つ */}
-      {[-1, 1].map((d) => (
-        <group key={`e${d}`} position={[d * 0.13, 0.9, headZ(d * 0.13, 0.9) - 0.014]} rotation={[0, d * 0.36, 0]}>
-          <Part g={geo.sphere} color="#2e1d3c" k="gloss" p={[0, 0, 0]} s={[0.056, 0.07, 0.026]} />
-          <Part g={geo.sphere} color="#6a4a8e" k="gloss" p={[0, -0.014, 0.01]} s={[0.04, 0.046, 0.02]} />
-          <Part g={geo.sphere} color="#170e1e" k="gloss" p={[0, -0.006, 0.02]} s={[0.022, 0.03, 0.012]} />
-          <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[-d * 0.018, 0.024, 0.026]} scale={[0.017, 0.019, 0.01]} />
-          <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[d * 0.017, -0.03, 0.025]} scale={0.008} />
-        </group>
-      ))}
-      {/* はな・くち（ω）・ほっぺ */}
-      <Part g={geo.sphere} color="#6e3a50" k="gloss" p={[0, 0.835, muzzleZ(0, 0.835)]} s={[0.03, 0.02, 0.018]} />
-      {[-1, 1].map((d) => (
-        <Part key={`m${d}`} g={cgeo.arc} color="#6e3a50" k="skin" p={[d * 0.021, 0.8, muzzleZ(d * 0.021, 0.8) - 0.004]} s={[0.021, 0.02, 0.02]} r={[0.25, 0, Math.PI]} />
-      ))}
-      {[-1, 1].map((d) => (
-        <Part key={`c${d}`} g={geo.sphere} color="#ff9fbd" p={[d * 0.22, 0.8, 0.262]} s={[0.056, 0.032, 0.02]} r={[0, d * 0.6, 0]} opacity={0.55} />
-      ))}
-      <Ears look={look} />
+      {evo && <Ruff look={look} y={0.62 + lift} />}
+      {/* あたま から うえ（進化すると lift ぶん あがり、みみが おおきく なる） */}
+      <group position={[0, lift, 0]}>
+        <Part g={geo.sphere} color={body} p={[0, HEAD.y, 0]} s={[HEAD.rx, HEAD.ry, HEAD.rz]} />
+        <Part g={geo.sphere} color={belly} p={[0, MUZZLE.y, MUZZLE.z]} s={[MUZZLE.rx, MUZZLE.ry, MUZZLE.rz]} />
+        {[-1, 1].map((d) => (
+          <Part key={`tuft${d}`} g={cgeo.capsule} color={body} p={[d * 0.035, 1.2, 0.1]} s={[0.05, 0.08, 0.04]} r={[0.4, 0, -d * 0.6]} />
+        ))}
+        {/* め：くろめ → ひとみの いろ（進化すると アクセントいろ） → どうこう → ひかり */}
+        {[-1, 1].map((d) => (
+          <group key={`e${d}`} position={[d * 0.13, 0.9, headZ(d * 0.13, 0.9) - 0.014]} rotation={[0, d * 0.36, 0]}>
+            <Part g={geo.sphere} color="#2e1d3c" k="gloss" p={[0, 0, 0]} s={[0.056, 0.07, 0.026]} />
+            <Part g={geo.sphere} color={evo ? accent : '#6a4a8e'} k="gloss" p={[0, -0.014, 0.01]} s={[0.04, 0.046, 0.02]} />
+            <Part g={geo.sphere} color="#170e1e" k="gloss" p={[0, -0.006, 0.02]} s={[0.022, 0.03, 0.012]} />
+            <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[-d * 0.018, 0.024, 0.026]} scale={[0.017, 0.019, 0.01]} />
+            <mesh geometry={cgeo.sphere} material={mat('#ffffff', { emissive: '#ffffff' })} position={[d * 0.017, -0.03, 0.025]} scale={0.008} />
+          </group>
+        ))}
+        {/* はな・くち（ω）・ほっぺ */}
+        <Part g={geo.sphere} color="#6e3a50" k="gloss" p={[0, 0.835, muzzleZ(0, 0.835)]} s={[0.03, 0.02, 0.018]} />
+        {[-1, 1].map((d) => (
+          <Part key={`m${d}`} g={cgeo.arc} color="#6e3a50" k="skin" p={[d * 0.021, 0.8, muzzleZ(d * 0.021, 0.8) - 0.004]} s={[0.021, 0.02, 0.02]} r={[0.25, 0, Math.PI]} />
+        ))}
+        {[-1, 1].map((d) => (
+          <Part key={`c${d}`} g={geo.sphere} color="#ff9fbd" p={[d * 0.22, 0.8, 0.262]} s={[0.056, 0.032, 0.02]} r={[0, d * 0.6, 0]} opacity={0.55} />
+        ))}
+        {evo && <Emblem look={look} p={[0, 1.05, headZ(0, 1.05) + 0.01]} s={0.03} />}
+        {/* みみの ない なかまは、進化すると あたまに とさか が はえる */}
+        {evo && look.ears === 'none' &&
+          [-1, 0, 1].map((i) => (
+            <Part key={`cr${i}`} g={geo.cone} color={i === 0 ? accent : belly} p={[i * 0.11, 1.33 - Math.abs(i) * 0.05, 0]} s={[0.075, i === 0 ? 0.34 : 0.24, 0.075]} r={[0, 0, -i * 0.4]} emissive="#203048" />
+          ))}
+        {evo ? (
+          <group position={[0, 1.12, 0]} scale={1.35}>
+            <group position={[0, -1.12, 0]}>
+              <Ears look={look} />
+            </group>
+          </group>
+        ) : (
+          <Ears look={look} />
+        )}
+        <Motif look={look} />
+      </group>
       <Tail look={look} />
-      <Motif look={look} />
-      <Extra look={look} />
+      <Extra look={look} lift={lift} />
+      {evo && <Aura look={look} />}
     </group>
   );
+}
+
+/** なかまを 大きく うつす カメラ。進化した姿は せが たかいので すこし ひいて うつす */
+export function portraitCamera(look: CreatureLook): { camera: [number, number, number]; target: [number, number, number] } {
+  return look.stage === 2 ? { camera: [0, 1.3, 3.9], target: [0, 0.8, 0] } : { camera: [0, 1.1, 3], target: [0, 0.6, 0] };
 }
 
 type GroupProps = ThreeElements['group'];

@@ -272,7 +272,7 @@ export const SPECIES: Species[] = [
     baseStats: { power: 20, explore: 18 }, growth: { power: 5, explore: 3 }, favoriteFood: 'fishjelly', personality: 'がんばりや',
     skills: ['みずさがし', 'こおりの かべ'], evolutions: [], unlock: 'ゆきぺんが かいがらと しずくで しんか',
     description: 'こおりの マントを まとった ペンギン。',
-    look: { body: '#8fd0f0', belly: '#f2fdff', accent: '#ffffff', ears: 'none', tail: 'none', motif: 'snow', extra: 'cape', scale: 1.1 } },
+    look: { body: '#8fd0f0', belly: '#f2fdff', accent: '#4f9fe8', ears: 'none', tail: 'none', motif: 'snow', extra: 'cape', scale: 1.1 } },
   { id: 'snowpen', baseId: 'yukipen', name: 'スノーぺん', animal: 'ぺんぎん', theme: 'ゆきの けっしょう', rarity: 3, ability: 'water', extraAbility: 'fly',
     baseStats: { power: 16, explore: 22 }, growth: { power: 4, explore: 4 }, favoriteFood: 'fishjelly', personality: 'がんばりや',
     skills: ['みずさがし', 'ゆきの はね'], evolutions: [], unlock: 'ゆきぺんが わたと ほしで しんか',
@@ -303,6 +303,9 @@ export const SPECIES: Species[] = [
     description: 'はなの ほうきで そらを とぶ ハムスター。',
     look: { body: '#ffd9c4', belly: '#fffaf0', accent: '#ff8fbf', ears: 'round', tail: 'none', motif: 'flower', extra: 'wings', scale: 1.1 } },
 ];
+
+// 進化先は 姿そのものが かわる（Creature.tsx / CreatureIcon が stage を見る）
+for (const s of SPECIES) if (s.baseId) s.look.stage = 2;
 
 const SPECIES_MAP = new Map(SPECIES.map((s) => [s.id, s]));
 

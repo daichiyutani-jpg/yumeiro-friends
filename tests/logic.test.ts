@@ -135,6 +135,16 @@ describe('なかまの 育成', () => {
 });
 
 describe('進化', () => {
+  it('進化先は 姿が かわる（stage 2）。おなじ なかまの 進化先どうしも 見た目が ちがう', () => {
+    for (const b of BASE_SPECIES) {
+      expect(b.look.stage, b.id).toBeUndefined();
+      const looks = b.evolutions.map((e) => getSpecies(e.to).look);
+      for (const l of looks) expect(l.stage).toBe(2);
+      const keys = looks.map((l) => `${l.extra}|${l.motif}`);
+      expect(new Set(keys).size, b.id).toBe(keys.length);
+    }
+  });
+
   it('条件（レベル・仲良し度・素材）を正しく判定し、素材を消費して進化する', () => {
     let s = fresh();
     const uid = s.friends[0].uid;
