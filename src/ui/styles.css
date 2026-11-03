@@ -413,3 +413,26 @@ input { font: inherit; }
   .qr { width: 128px !important; height: 128px !important; }
   .mock-banner { margin-bottom: 2px; }
 }
+/* いろの まる・ぼうけんの チームの アイコンも さわれる はんいを ひろげる（2026-11-03 ボタン点検） */
+.swatch, .team-strip .tm { position: relative; }
+.swatch::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+.team-strip .tm { width: 40px; height: 40px; }
+.team-strip .tm::after { content: ''; position: absolute; inset: -4px; }
+.swatch:active { transform: scale(.92); }
+
+/* こうかんの えらぶ ボタンは せまい がめんでも おしやすい たかさに（はいらない ぶんは ◀ ▶ で めくる） */
+.trade-steps .choice { min-height: 38px; }
+.trade-steps .pager .btn { min-width: 52px; min-height: 38px; }
+
+/* よこむきの スマホ（たかさ 420px いか・はば 720px いか）で はみださないように つめる */
+@media (max-width: 720px), (max-height: 420px) {
+  .mock-banner { padding: 4px 10px; font-size: .66rem; line-height: 1.35; }
+  .care-grid .btn { min-height: 48px; padding: 6px 4px; font-size: .68rem; white-space: nowrap; }
+  .care-grid .btn .ic { font-size: 1.1rem; }
+  .body > .btn.block { min-height: 44px; }
+  .card .grow .note { font-size: .72rem; margin: 2px 4px; }
+  .card .grow .btn.block { min-height: 44px; }
+  .card.center .celebrate { font-size: 1.8rem; margin: 0; }
+  .card.center .btn.block { min-height: 48px; }
+  .body > .note { font-size: .74rem; line-height: 1.45; margin: 2px 4px; }
+}

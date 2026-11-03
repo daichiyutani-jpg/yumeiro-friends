@@ -115,11 +115,12 @@ export function SocialScreen() {
           <div className="grid trade-steps fill">
           <div className="card">
             <b>① こうかんする あいて</b>
-            <div className="row wrap" style={{ marginTop: 6 }}>
-              {SAMPLE_FRIENDS.map((f) => (
+            <Paged
+              className="grid trade-choices"
+              items={SAMPLE_FRIENDS.map((f) => (
                 <button key={f.id} className={`choice${partner.id === f.id ? ' on' : ''}`} onClick={() => { setPartner(f); setGet(null); }}>{f.player.name}</button>
               ))}
-            </div>
+            />
           </div>
           <div className="card">
             <b>② あなたが わたす もの（1こ）</b>
@@ -134,11 +135,13 @@ export function SocialScreen() {
           </div>
           <div className="card">
             <b>③ もらいたい もの（1こ）</b>
-            <div className="row wrap" style={{ marginTop: 6 }}>
-              {partner.offers.map((id) => (
+            <Paged
+              className="grid trade-choices"
+              resetKey={partner.id}
+              items={partner.offers.map((id) => (
                 <button key={id} className={`choice${get === id ? ' on' : ''}`} onClick={() => setGet(id)}>{itemIcon(id)} {itemName(id)}</button>
               ))}
-            </div>
+            />
           </div>
           </div>
           <button className="btn primary block" disabled={!give || !get} onClick={() => setConfirm(true)}>
